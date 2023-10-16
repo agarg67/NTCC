@@ -6,3 +6,8 @@ import pickle
 import random
 import threading
 import time
+
+def main():
+    pass
+
+main()
