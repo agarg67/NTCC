@@ -31,9 +31,10 @@ class Client:
     
     bufferSize=4096
     
-    def __init__(self, ipPass, portPass):
+    def __init__(self, ipPass, portPass, portPass2):
         self.client_ip_address=ipPass
         self.clientCentralPort=portPass
+        self.clientRelayPort=portPass2
         self.createSocket()
     
     def createSocket(self):
@@ -76,11 +77,39 @@ class Client:
             
     def run_program(self):
         
+        flagforServerConnection=True#will be made false
+        
+        while(flagforServerConnection==False):
+            time.sleep(1)# will be changed 
+        
         while(True):
             
             if(self.inputData!=""):
                 print(self.inputData)
+                localInputData=self.inputData
                 self.inputData=""
+                
+                if(localInputData=="sendrelay"): # will be changed
+                    print("hi")
+                    message="dataSent"
+                    
+                    self.UDPClientRelaySocket.sendto(message.encode(),("10.155.162.199", 3953))#will be changed according to relay ip
+                
+            if(self.relayData!=""):
+                print(self.relayData)
+                localRelayData=self.relayData[0]
+                localRelayAddr=self.relayData[1]
+                self.relayData=""
+                
+                
+                if(b"dataSent" in localRelayData): # will be changed
+                    message="gotMessage"
+                    self.UDPClientRelaySocket.sendto(message.encode(), localRelayAddr)
+                
+            if(self.centralData!=""):
+                print(self.centralData)
+                localCentralData=self.centralData
+                self.relayData=""
             
             
 def get_local_ip():
@@ -100,10 +129,16 @@ def main():
     localIP=get_local_ip() 
     randPort=random.randrange(1500, 50000, 1)
     
+    randPort2=random.randrange(1500, 50000, 1)
+    
+    while(randPort2==randPort):
+        randPort2=random.randrange(1500, 50000, 1)
+    
     print(randPort)
+    print(randPort2)
     print(localIP)
     
-    client = Client(localIP, randPort)
+    client = Client(localIP, randPort, randPort2)
     
     client.run_program()
     
