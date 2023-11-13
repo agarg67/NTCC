@@ -1,7 +1,14 @@
 Central Server:
  ````
  The format of the messages that the server can receive is as follows:
- - 
+ - ackcon: received initial request to connect from client
+ - ackpubip: received public key and ip address from client
+ - ackquestion: received question from client
+ - ackanswer: received answer from client
+ - defaultclientcheck: checks if there is a client on the opposite side of the communication
+ - ackcomreq: received request to start communication
+ - sendcomreq: send public key and a list of ip addresses to the client 
+ - sendipmapper: send ip addresses to the forwarder and noise generator
  ````
 
 
