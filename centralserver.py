@@ -15,5 +15,9 @@ class CentralServer:
 def main():
     pass
 
+## Look into Socket.RDM instead of Socket.DGRAM
+
+
+
 
 main()
