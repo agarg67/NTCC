@@ -26,6 +26,8 @@ ackanswer <question id>: Accept question's answer
 
 initiatecomreq: request comunication to start
 
+acksendcomereq: accept the list of ip addresses and public key
+
 message <message id> <messsage>: sending a message to a user
 
 messageack <message id>: implicit ack sends
