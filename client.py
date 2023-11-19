@@ -90,7 +90,7 @@ class Client:
 
                 ### The following if statements are bare-bone to purely test communication between client and server, will
                 ### need to be changed to further continue sending messages to the server to store the information.
-                if(localInputData=="connect"):
+                if(localInputData=="reqcon"):
                     message="ackcon"
                     message_bytes = message.encode('ascii')
                     self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort)) # will be changed according to central server ip
