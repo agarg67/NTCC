@@ -44,3 +44,8 @@ Noise Generator:
 - cloneforwardmessage: clones received forward message and sends it to other servers 
 ````
 
+Note:
+```
+Local input for non message will need to have CMD#? at start to diffrentiate
+```
+

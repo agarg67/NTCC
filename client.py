@@ -6,6 +6,7 @@ import pickle
 import random
 import threading
 import time
+import rsa
 
 class Client:
     
@@ -28,6 +29,12 @@ class Client:
     relayData=""
     
     bufferSize=4096
+    
+    publicKeySelf=""
+    privatekeySelf=""
+    
+    publickeyPeer=""
+    
     
     def __init__(self, ipPass, portPass, portPass2):
         self.client_ip_address=ipPass
@@ -72,7 +79,10 @@ class Client:
         while(True):
             inp=self.UDPClientRelaySocket.recvfrom(self.bufferSize)
             self.relayData=inp
-
+            
+    def sendPublickey(self):
+        message="sendpubip"
+        
     ### Will need to separate the function into 2 different functions, one for the central server and one for communication between the forwarder ##
     def run_program(self):
         
@@ -83,7 +93,7 @@ class Client:
         
         while(True):
             
-            if(self.inputData!=""):
+            if(self.inputData!="" and "CMD#?" in self.inputData):
                 print(self.inputData)
                 localInputData=self.inputData
                 self.inputData=""
@@ -125,6 +135,13 @@ class Client:
                     message = localInputData
                     message_bytes = message.encode('ascii')
                     self.UDPClientCentralSocket.sendto(message_bytes, (self.centralServerIp, self.centralServerPort))
+                    
+            elif(self.inputData!=""):
+                localInputData=self.inputData
+                self.inputData=""
+                
+                self.sendquestion(localInputData)
+            
                 
             if(self.relayData!=""):
                 print(self.relayData)
@@ -138,8 +155,9 @@ class Client:
                 
             if(self.centralData!=""):
                 print(self.centralData)
-                localCentralData=self.centralData
-                self.relayData=""
+                localCentralData=self.centralData[0]
+                
+                self.centralData=""
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
