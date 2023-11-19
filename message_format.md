@@ -11,7 +11,6 @@ Central Server:
  - sendipmapper: send ip addresses to the forwarder and noise generator
  ````
 
-
 Client:
 ````
 - reqcon: used to start initial connection between client and central server. If successful, the client sends its public key and ip address
@@ -28,8 +27,19 @@ Client:
 ````
 
 Forwarder:
-
+````
+- ackreceiveipmapper: receive ip addresses from the central server
+- sendipmapper: send ip addresses of other servers to the noise generator
+- ackclientmessage: receive new message from client
+- forwardmessage: forward message to the noise generator
+- ackforwardmessage <message id>: explicit ack sends for the message sent to the noise generator
+````
 
 Noise Generator:
-
+````
+- ackclientmessage: receive message from forwader
+- ackreceiveipmapper: receive ip addresses from the forwarder server
+- sendipmapperpropagator: send ip addresses to connecting servers from the noise generator server
+- cloneforwardmessage: clones received forward message and sends it to other servers 
+````
 
