@@ -35,11 +35,19 @@ class Client:
     
     publickeyPeer=""
     
+    questionId=0
+    messageId=0
+    
     
     def __init__(self, ipPass, portPass, portPass2):
         self.client_ip_address=ipPass
         self.clientCentralPort=portPass
         self.clientRelayPort=portPass2
+        qid_base=random.randrange(1001, 2000, 2)
+        mid_base=random.randrange(2001, 3000, 3)
+        
+        self.questionId=random.randrange(qid_base, qid_base*10000, 4)
+        self.messageId=random.randrange(mid_base, mid_base*10000, 3)
         self.createSocket()
     
     def createSocket(self):
@@ -82,6 +90,17 @@ class Client:
             
     def sendPublickey(self):
         message="sendpubip"
+        
+    def sendQuestionToServer(self, question):
+        message="sendquestion" + "<" + str(self.questionId) + ">" + "<" + str(question) + ">"
+        
+        
+        self.questionId+=1
+        
+    def sendMessage(self, message):
+        message="message"
+        
+        self.messageId+=1
         
     ### Will need to separate the function into 2 different functions, one for the central server and one for communication between the forwarder ##
     def run_program(self):
@@ -140,7 +159,7 @@ class Client:
                 localInputData=self.inputData
                 self.inputData=""
                 
-                self.sendquestion(localInputData)
+                self.sendQuestionToServer(localInputData)
             
                 
             if(self.relayData!=""):
