@@ -6,9 +6,10 @@ Central Server:
  - ackquestion: received question from client
  - ackanswer: received answer from client
  - defaultclientcheck: checks if there is a client on the opposite side of the communication
- - ackcomreq: received request to start communication
+ - comrequest: received request to start communication
  - sendcomreq: send public key and a list of ip addresses to the client 
  - sendipmapper: send ip addresses to the forwarder and noise generator
+ - receivedis: received request to disconnect from client
  ````
 
 Client:
@@ -18,7 +19,8 @@ Client:
 - sendquestion <question id> <question>: Used to send the question to server to start intial communication
 - answerquestion <question id> <answer>: answer a provided question
 - ackanswer <question id>: Accept question's answer
-- initiatecomreq: request comunication to start
+- ackdis: request to disconnect from Central server
+- comrequest: request comunication to start
 - acksendcomereq: accept the list of ip addresses and public key
 - message <message id> <messsage>: sending a message to a user
 - messageack <message id>: implicit ack sends
@@ -39,7 +41,6 @@ Noise Generator:
 ````
 - ackclientmessage: receive message from forwader
 - ackreceiveipmapper: receive ip addresses from the forwarder server
-- sendipmapperpropagator: send ip addresses to connecting servers from the noise generator server
 - cloneforwardmessage: clones received forward message and sends it to other servers 
 ````
 
