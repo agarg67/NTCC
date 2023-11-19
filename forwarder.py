@@ -15,14 +15,14 @@ class Forwarder:
     def __init__(self):
         pass
 
-    def forwarder(source, destination):
+    def forwarder(self, source, destination):
         while True:
-            data = source.recv(bufferSize)
+            data = source.recv(self.bufferSize)
             if not data:
                 break
             destination.sendall(data)
 
-    def startPortForward(localPort, remoteHost, remotePort):
+    def startPortForward(self, localPort, remoteHost, remotePort):
         server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server.bind(('localHost', localPort))
         server.listen(1)
@@ -37,8 +37,8 @@ class Forwarder:
             remoteSocket = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
             remoteSocket.connect(('localhost', remotePort))
 
-            forwardRemote = threading.Thread(target = forwarder, args = (localSocket, remoteSocket))
-            forwardlocal = threading.Thread(target = forwarder, args = (remoteSocket, localSocket))
+            forwardRemote = threading.Thread(target = self.forwarder, args = (localSocket, remoteSocket))
+            forwardlocal = threading.Thread(target = self.forwarder, args = (remoteSocket, localSocket))
 
             forwardRemote.start()
             forwardlocal.start()
