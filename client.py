@@ -93,7 +93,7 @@ class Client:
                     print("hi")
                     message="dataSent"
                     
-                    self.UDPClientRelaySocket.sendto(message.encode(),("10.155.162.199", 3953))#will be changed according to relay ip
+                    self.UDPClientRelaySocket.sendto(message.encode(),("10.155.162.199", 5720))#will be changed according to relay ip
                 
             if(self.relayData!=""):
                 print(self.relayData)
