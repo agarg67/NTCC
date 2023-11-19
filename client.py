@@ -12,11 +12,9 @@ class Client:
     client_ip_address="0.0.0.0"
     clientCentralPort=0
     clientRelayPort=0
-    
-    
-    
-    centralServerIp="0.0.0.0"
-    centralServerPort=0
+
+    centralServerIp="127.0.0.1"
+    centralServerPort=20001
     
     relayServerIpList=[]
     relayServerPortList=[]
@@ -74,7 +72,8 @@ class Client:
         while(True):
             inp=self.UDPClientRelaySocket.recvfrom(self.bufferSize)
             self.relayData=inp
-            
+
+    ### Will need to separate the function into 2 different functions, one for the central server and one for communication between the forwarder ##
     def run_program(self):
         
         flagforServerConnection=True#will be made false
@@ -88,19 +87,50 @@ class Client:
                 print(self.inputData)
                 localInputData=self.inputData
                 self.inputData=""
-                
-                if(localInputData=="sendrelay"): # will be changed
-                    print("hi")
-                    message="dataSent"
-                    
-                    self.UDPClientRelaySocket.sendto(message.encode(),("10.155.162.199", 5720))#will be changed according to relay ip
+
+                ### The following if statements are bare-bone to purely test communication between client and server, will
+                ### need to be changed to further continue sending messages to the server to store the information.
+                if(localInputData=="connect"):
+                    message="ackcon"
+                    message_bytes = message.encode('ascii')
+                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort)) # will be changed according to central server ip
+
+                if (localInputData == "initiate"):
+                    message = "comrequest"
+                    message_bytes = message.encode('ascii')
+                    self.UDPClientCentralSocket.sendto(message_bytes, (self.centralServerIp, self.centralServerPort))
+
+                if(localInputData=="Public Key"):
+                    message="ackpubip"
+                    message_bytes = message.encode('ascii')
+                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
+
+                if(localInputData=="question"):
+                    message="ackquestion"
+                    message_bytes = message.encode('ascii')
+                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
+
+                if(localInputData=="answer"):
+                    message="ackanswer"
+                    message_bytes = message.encode('ascii')
+                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
+
+                if(localInputData=="disconnect"):
+                    message="ackdis"
+                    message_bytes = message.encode('ascii')
+                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
+
+                ## Tests for unknown input into the central server ##
+                if (localInputData == ""):
+                    message = localInputData
+                    message_bytes = message.encode('ascii')
+                    self.UDPClientCentralSocket.sendto(message_bytes, (self.centralServerIp, self.centralServerPort))
                 
             if(self.relayData!=""):
                 print(self.relayData)
                 localRelayData=self.relayData[0]
                 localRelayAddr=self.relayData[1]
                 self.relayData=""
-                
                 
                 if(b"dataSent" in localRelayData): # will be changed
                     message="gotMessage"
@@ -110,8 +140,7 @@ class Client:
                 print(self.centralData)
                 localCentralData=self.centralData
                 self.relayData=""
-            
-            
+
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
@@ -141,6 +170,5 @@ def main():
     client = Client(localIP, randPort, randPort2)
     
     client.run_program()
-    
 
 main()
