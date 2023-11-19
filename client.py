@@ -92,13 +92,13 @@ class Client:
         message="sendpubip"
         
     def sendQuestionToServer(self, question):
-        message="sendquestion" + "<" + str(self.questionId) + ">" + "<" + str(question) + ">"
+        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">"
         
         
         self.questionId+=1
         
     def sendMessage(self, message):
-        message="message"
+        message="message" + " <" + str(self.messageId) + ">" + " <" + message + ">"
         
         self.messageId+=1
         
