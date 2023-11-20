@@ -7,8 +7,8 @@ Central Server:
  - ackanswer: received answer from client
  - defaultclientcheck: checks if there is a client on the opposite side of the communication
  - comrequest: received request to start communication
- - sendcomreq: send public key and a list of ip addresses to the client 
- - sendipmapper: send ip addresses to the forwarder and noise generator
+ - sendcomreq <public key> <(ip1 port1) (ip2 port2) ...>: send public key and a list of ip addresses to the client 
+ - sendipmapper <object of ipmap>: send ip addresses to the forwarder and noise generator
  - receivedis: received request to disconnect from client
  ````
 

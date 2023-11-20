@@ -7,6 +7,18 @@ import random
 import threading
 import time
 
+class IP_mapper:
+    ip_address1=""
+    ip_address2=""
+    port1=0
+    port2=0
+    
+    def __init__(self, ip1, ip2, p1, p2):
+        self.ip_address1=ip1
+        self.ip_address2=ip2
+        self.port1=p1
+        self.port2=p2
+
 localPort = 8080
 
 NoiseGeneratorServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
