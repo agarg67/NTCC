@@ -8,7 +8,7 @@ import random
 import threading
 import time
 
-class IP_mapper:
+class IP_mapper: 
     ip_address1=""
     ip_address2=""
     port1=0
