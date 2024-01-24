@@ -11,8 +11,8 @@ import rsa
 
 class Client:
     
-    client_ip_address="0.0.0.0"
-    clientCentralPort=0
+    client_ip_address="localhost"
+    clientCentralPort=0  #9999 on forwarder
     clientRelayPort=0
 
     centralServerIp="127.0.0.1"

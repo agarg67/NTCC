@@ -1,3 +1,4 @@
+import queue
 import sys
 import os
 import socket
@@ -7,6 +8,7 @@ import random
 import threading
 import time
 
+<<<<<<< Updated upstream
 class IP_mapper:
     ip_address1=""
     ip_address2=""
@@ -22,43 +24,25 @@ class IP_mapper:
 class Forwarder:
     HOST = ""
     PORT = 0
+=======
+server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+server.bind(("localhost", 9999))
+messages = queue.Queue()
+client = []
+def recieve():
+    while True:
+        try:
+            message ,_ = server.recvfrom(2048)
+            messages.put(message)
+        except:
+            pass
+>>>>>>> Stashed changes
 
-    bufferSize = 4096
-    def __init__(self):
-        pass
+def relay():
+    while not messages.empty():
+        message = messages.get()
 
-    def forwarder(self, source, destination):
-        while True:
-            data = source.recv(self.bufferSize)
-            if not data:
-                break
-            destination.sendall(data)
+        server.sendto(message, ("127.0.0.1", 20001)) #subject to change
 
-    def startPortForward(self, localPort, remoteHost, remotePort):
-        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server.bind(('localHost', localPort))
-        server.listen(1)
-        print("forwarding from localHost {localPort} to {remoteHost}: {remotePort}")
-
-
-        while True:
-            localSocket, localAddr = server.accept()
-
-            print("accepted connection")
-
-            remoteSocket = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
-            remoteSocket.connect(('localhost', remotePort))
-
-            forwardRemote = threading.Thread(target = self.forwarder, args = (localSocket, remoteSocket))
-            forwardlocal = threading.Thread(target = self.forwarder, args = (remoteSocket, localSocket))
-
-            forwardRemote.start()
-            forwardlocal.start()
-
-
-    if __name__ == "__main__":
-        localPort = 8080
-        remoteHost = "example.com"
-        remotePort = 9090
-        message = "hi "
-        startPortForward(localPort, remoteHost, remotePort)
+t1 = threading.Thread(target=recieve)
+t2 = threading.Thread(target=relay)
