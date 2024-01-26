@@ -22,7 +22,7 @@ InitiateCommunication = False
 ### Keeps a list of tracked messages ids ###
 received_messages = []
 
-ip_addresses = map()
+#ip_addresses = map()
 
 active_clients = list()
 public_keys = list() ### For now we can store it in a list, later we can find a more secure way to store it ###
@@ -75,13 +75,14 @@ def __init__():
 
 
 def parse_message(data, addr):
+    addr = "68.99.192.233"
     if data.decode() == "ackcon":
         print("Client from {} has successfully connected to the Server".format(addr))
         active_clients.append(addr)
 
     elif data.decode() == "comrequest":
         print("Client from {} has requested to communicate with another client".format(addr))
-        active_clients.append(('565.512.512.512', 20002)) ### Fake Client for testing purposes ###
+        #active_clients.append(('565.512.512.512', 20002)) ### Fake Client for testing purposes ###
         initiate_communication(data, addr)
 
     elif data.decode() == "ackpubip":
@@ -114,9 +115,10 @@ def initiate_communication(data, addr):
     ### Checks if there is two clients simultaneously requesting to communicate ###
         print(active_clients)
 
-        if active_clients[0][0] != active_clients[1][0]:
-            print("Two clients have requested to communicate with each other")
-            print("Client {} and Client {} are trying to communicate".format(active_clients[0], active_clients[1]))
+        print("Error: No other client is requesting to communicate")
+        #if active_clients[0][0] != active_clients[1][0]:
+        #    print("Two clients have requested to communicate with each other")
+       #     print("Client {} and Client {} are trying to communicate".format(active_clients[0], active_clients[1]))
         global InitiateCommunication
         InitiateCommunication = True
 
@@ -158,6 +160,7 @@ def main():
         else:
             data, addr = UDPserver.recvfrom(bufferSize)
             receive_message(data, addr)
+            addr = "68.99.192.233"
             print("received message: {} from {}".format(data, addr)) ### For testing purposes ###
             print("Timer has started for 2 minutes")
 
