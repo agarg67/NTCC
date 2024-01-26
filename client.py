@@ -6,11 +6,13 @@ import pickle
 import random
 import threading
 import time
+import rsa
+
 
 class Client:
     
-    client_ip_address="0.0.0.0"
-    clientCentralPort=0
+    client_ip_address="localhost"
+    clientCentralPort=0  #9999 on forwarder
     clientRelayPort=0
 
     centralServerIp="127.0.0.1"
@@ -29,10 +31,30 @@ class Client:
     
     bufferSize=4096
     
+    publicKeySelf=""
+    privatekeySelf=""
+    
+    publickeyPeer=""
+    
+    questionId=0
+    messageId=0
+    
+    
     def __init__(self, ipPass, portPass, portPass2):
         self.client_ip_address=ipPass
         self.clientCentralPort=portPass
         self.clientRelayPort=portPass2
+        
+        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
+        
+        print(self.publicKeySelf)
+        print(self.privatekeySelf)
+        
+        qid_base=random.randrange(1001, 2000, 2)
+        mid_base=random.randrange(2001, 3000, 3)
+        
+        self.questionId=random.randrange(qid_base, qid_base*10000, 4)
+        self.messageId=random.randrange(mid_base, mid_base*10000, 3)
         self.createSocket()
     
     def createSocket(self):
@@ -72,7 +94,23 @@ class Client:
         while(True):
             inp=self.UDPClientRelaySocket.recvfrom(self.bufferSize)
             self.relayData=inp
-
+            
+    def sendPublickeyIP(self):
+        message="sendpubip" + " <" + str(self.publicKeySelf) + ">" + " <" + str(self.client_ip_address) + ">"
+        
+        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
+        
+    def sendQuestionToServer(self, question):
+        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">"
+        
+        
+        self.questionId+=1
+        
+    def sendMessage(self, message):
+        message="message" + " <" + str(self.messageId) + ">" + " <" + message + ">"
+        
+        self.messageId+=1
+        
     ### Will need to separate the function into 2 different functions, one for the central server and one for communication between the forwarder ##
     def run_program(self):
         
@@ -83,48 +121,31 @@ class Client:
         
         while(True):
             
-            if(self.inputData!=""):
+            if(self.inputData!="" and "CMD#?" in self.inputData):
                 print(self.inputData)
                 localInputData=self.inputData
                 self.inputData=""
 
                 ### The following if statements are bare-bone to purely test communication between client and server, will
                 ### need to be changed to further continue sending messages to the server to store the information.
-                if(localInputData=="connect"):
-                    message="ackcon"
+                if(localInputData=="CMD#?reqcon"):
+                    message="reqcon"
                     message_bytes = message.encode('ascii')
                     self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort)) # will be changed according to central server ip
+                    
 
-                if (localInputData == "initiate"):
-                    message = "comrequest"
-                    message_bytes = message.encode('ascii')
-                    self.UDPClientCentralSocket.sendto(message_bytes, (self.centralServerIp, self.centralServerPort))
+                
 
-                if(localInputData=="Public Key"):
-                    message="ackpubip"
-                    message_bytes = message.encode('ascii')
-                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
-
-                if(localInputData=="question"):
-                    message="ackquestion"
-                    message_bytes = message.encode('ascii')
-                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
-
-                if(localInputData=="answer"):
-                    message="ackanswer"
-                    message_bytes = message.encode('ascii')
-                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
-
-                if(localInputData=="disconnect"):
-                    message="ackdis"
-                    message_bytes = message.encode('ascii')
-                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort))
-
-                ## Tests for unknown input into the central server ##
-                if (localInputData == ""):
-                    message = localInputData
-                    message_bytes = message.encode('ascii')
-                    self.UDPClientCentralSocket.sendto(message_bytes, (self.centralServerIp, self.centralServerPort))
+            elif(self.inputData!=""):
+                print(self.inputData)
+                localInputData=self.inputData
+                self.inputData=""
+                
+                if(localInputData=="sendpubip"):
+                    self.sendPublickeyIP()
+                    
+                
+                
                 
             if(self.relayData!=""):
                 print(self.relayData)
@@ -138,8 +159,13 @@ class Client:
                 
             if(self.centralData!=""):
                 print(self.centralData)
-                localCentralData=self.centralData
-                self.relayData=""
+                localCentralData=self.centralData[0]
+                
+                self.centralData=""
+                
+                if(localCentralData=="ackpubip"):
+                    print("public key sent to server")
+                    
 
 def get_local_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

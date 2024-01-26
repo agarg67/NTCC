@@ -1,4 +1,4 @@
-Central Server:
+Central Server (sending messages):
  ````
  The format of the messages that the server can receive is as follows:
  - ackcon: received initial request to connect from client
@@ -7,15 +7,15 @@ Central Server:
  - ackanswer: received answer from client
  - defaultclientcheck: checks if there is a client on the opposite side of the communication
  - comrequest: received request to start communication
- - sendcomreq: send public key and a list of ip addresses to the client 
- - sendipmapper: send ip addresses to the forwarder and noise generator
+ - sendcomreq <public key> <(ip1 port1) (ip2 port2) ...>: send public key and a list of ip addresses to the client 
+ - sendipmapper <object of ipmap>: send ip addresses to the forwarder and noise generator
  - receivedis: received request to disconnect from client
  ````
 
-Client:
+Client (sending messages):
 ````
 - reqcon: used to start initial connection between client and central server. If successful, the client sends its public key and ip address
-- sendpubip <public key> <ip address >: used to send the public key and ip address to the central server
+- sendpubip <public key> <ip address>: used to send the public key and ip address to the central server
 - sendquestion <question id> <question>: Used to send the question to server to start intial communication
 - answerquestion <question id> <answer>: answer a provided question
 - ackanswer <question id>: Accept question's answer
@@ -43,4 +43,9 @@ Noise Generator:
 - ackreceiveipmapper: receive ip addresses from the forwarder server
 - cloneforwardmessage: clones received forward message and sends it to other servers 
 ````
+
+Note:
+```
+Local input for non message will need to have CMD#? at start to diffrentiate
+```
 
