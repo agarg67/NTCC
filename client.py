@@ -95,14 +95,36 @@ class Client:
             inp=self.UDPClientRelaySocket.recvfrom(self.bufferSize)
             self.relayData=inp
             
+    def parseIncomingMessage(self, messageToParse):
+        finalArr=[]
+        
+        if("<" not in messageToParse):
+            finalArr.append(messageToParse)
+            return finalArr
+        
+        tempArr=messageToParse.split("<")
+        
+        for i in range(len(tempArr)):
+            tempArr[i]=tempArr[i].strip()
+            
+        for i in range(1,len(tempArr)):
+            tempArr[i]=tempArr[i][1:len(tempArr)-1]
+        
+        finalArr=tempArr
+        
+        return finalArr
+        
+            
     def sendPublickeyIP(self):
         message="sendpubip" + " <" + str(self.publicKeySelf) + ">" + " <" + str(self.client_ip_address) + ">"
         
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
+        
     def sendQuestionToServer(self, question):
         message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">"
         
+        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
         self.questionId+=1
         
@@ -165,6 +187,9 @@ class Client:
                 
                 if(localCentralData=="ackpubip"):
                     print("public key sent to server")
+                
+                if("sendquestion" in localCentralData):
+                    pass
                     
 
 def get_local_ip():
