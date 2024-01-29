@@ -132,6 +132,11 @@ class Client:
         message="message" + " <" + str(self.messageId) + ">" + " <" + message + ">"
         
         self.messageId+=1
+    
+    def answerQuestion(self, qid, answer):
+        message="answerquestion" + " <" + str(qid) + ">" + " <" + answer + ">"
+        
+        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
     ### Will need to separate the function into 2 different functions, one for the central server and one for communication between the forwarder ##
     def run_program(self):
@@ -189,7 +194,60 @@ class Client:
                     print("public key sent to server")
                 
                 if("sendquestion" in localCentralData):
-                    pass
+                    
+                    questionAnswer=""
+                    parsedMessage= self.parseIncomingMessage(localCentralData.decode())
+                    print(parsedMessage[2])
+                    
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    questionAnswer=self.inputData
+                    self.inputData=""
+                    
+                    self.answerQuestion(parsedMessage[1], questionAnswer)
+                    
+                if("answerquestion" in localCentralData):
+                    acceptOrReject="No"
+                    
+                    parsedMessage = self.parseIncomingMessage(localCentralData.decode())
+                    
+                    print("Recieved the following answer:")
+                    print(parsedMessage[2])
+                    print("reply yes to accept, reply with anything else to reject")
+                    
+                    questionAnswer=""
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    questionAnswer=self.inputData
+                    self.inputData=""
+                    
+                    replytoSend=""
+                    
+                    if("yes" in questionAnswer.lower()):
+                        replytoSend="ackanswer" + " <" + str(parsedMessage[1]) + ">"
+                    else:
+                        replytoSend="nakanswer" + " <" + str(parsedMessage[1]) + ">"
+                    
+                    self.UDPClientCentralSocket.sendto(replytoSend.encode(),(self.centralServerIp, self.centralServerPort))
+                    
+                if("ackanswer" in localCentralData):
+                    print("Your Answer has been accepted, we will move forward with completing the connection!")
+                    
+                    #space here to code for getting ip map and public key
+                
+                if("nakanswer" in localCentralData):
+                    print("Your answer has been rejected, please try from begining. Current session is terminated")
+                    
+                    #space here to code for more things
+                    
+                    
+                    
+                    
+                    
+                    
+                    
                     
 
 def get_local_ip():
