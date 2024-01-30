@@ -8,15 +8,17 @@ import threading
 import time
 import rsa
 
-
+# client class
+# contains bulk of the code for socket communication
 class Client:
     
+    #variables initial state
     client_ip_address="localhost"
-    clientCentralPort=0  #9999 on forwarder
+    clientCentralPort=0  
     clientRelayPort=0
 
     centralServerIp=""
-    centralServerPort=20001
+    centralServerPort=20001 # port is fixed up
     
     relayServerIpList=[]
     relayServerPortList=[]
@@ -29,6 +31,7 @@ class Client:
     
     relayData=""
     
+    # this is the fixed buffersixe for recieving data
     bufferSize=4096
     
     publicKeySelf=""
@@ -40,7 +43,8 @@ class Client:
     messageId=0
     
     
-    def __init__(self, ipPass, portPass, portPass2):
+    # init used to initialize the object
+    def __init__(self, ipPass, portPass, portPass2): #self key word is needed as the first parameter in any function that belongs to the class and act opposite to this
         self.client_ip_address=ipPass
         self.clientCentralPort=portPass
         self.clientRelayPort=portPass2
@@ -57,6 +61,7 @@ class Client:
         self.messageId=random.randrange(mid_base, mid_base*10000, 3)
         self.createSocket()
     
+    # used to create all sockets for communication and setup multi-threading
     def createSocket(self):
         
         self.threadInput=threading.Thread(target=self.asynchrounous_input)
@@ -138,8 +143,8 @@ class Client:
         
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
-    ### Will need to separate the function into 2 different functions, one for the central server and one for communication between the forwarder ##
-    def run_program(self):
+    
+    def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
         
         flagforServerConnection=True#will be made false
         
@@ -159,9 +164,7 @@ class Client:
                     message="reqcon"
                     message_bytes = message.encode('ascii')
                     self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort)) # will be changed according to central server ip
-                    
 
-                
 
             elif(self.inputData!=""):
                 print(self.inputData)
@@ -171,8 +174,6 @@ class Client:
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
                     
-                
-                
                 
             if(self.relayData!=""):
                 print(self.relayData)
@@ -243,14 +244,9 @@ class Client:
                     #space here to code for more things
                     
                     
-                    
-                    
-                    
-                    
-                    
-                    
+                           
 
-def get_local_ip():
+def get_local_ip(): # this method is used to resolve your own ip address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         # doesn't even have to be reachable
@@ -262,9 +258,12 @@ def get_local_ip():
         s.close()
     return IP    
 
-def main():
+def main(): # entry function of the program
     
+    #fetching the ip address here
     localIP=get_local_ip() 
+    
+    #setting ports for socket communication
     randPort=random.randrange(1500, 50000, 1)
     
     randPort2=random.randrange(1500, 50000, 1)
@@ -276,8 +275,10 @@ def main():
     print(randPort2)
     print(localIP)
     
+    #creating a client object to start program 
     client = Client(localIP, randPort, randPort2)
     
+    # we enter client program, everything beyond this point is coded inside the client class
     client.run_program()
 
-main()
+main() # starting the program
