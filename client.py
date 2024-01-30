@@ -15,7 +15,7 @@ class Client:
     clientCentralPort=0  #9999 on forwarder
     clientRelayPort=0
 
-    centralServerIp="127.0.0.1"
+    centralServerIp=""
     centralServerPort=20001
     
     relayServerIpList=[]
