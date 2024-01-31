@@ -8,7 +8,6 @@ import random
 import threading
 import time
 
-<<<<<<< Updated upstream
 class IP_mapper:
     ip_address1=""
     ip_address2=""
@@ -24,7 +23,6 @@ class IP_mapper:
 class Forwarder:
     HOST = ""
     PORT = 0
-=======
 server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server.bind(("localhost", 9999))
 messages = queue.Queue()
@@ -36,7 +34,6 @@ def recieve():
             messages.put(message)
         except:
             pass
->>>>>>> Stashed changes
 
 def relay():
     while not messages.empty():

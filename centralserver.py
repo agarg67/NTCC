@@ -1,6 +1,7 @@
 import sys
 import os
 import socket
+import hashlib
 import struct
 import re
 import pickle
@@ -9,45 +10,32 @@ import threading
 import time
 import rsa
 
+
 class CentralServer:
-    global localIP, localPort, bufferSize, ForwarderIP, ForwarderPort, InitiateCommunication, \
-        received_messages, active_clients, public_keys, questions, answers, UDPserver
-    # Parameters for the central server
-    localIP = "127.0.0.1"  ## Will change accordingly to the IP address of the Raspberry Pi connected to different networks
+
+    # Vital Parameters for the Central Server
+    localIP = "127.0.0.1"
     localPort = 20001
     bufferSize = 1024
 
-    ### Parameters for the forwarder server ###
-    ForwarderIP = ""
-    ForwarderPort = 0
-
-    InitiateCommunication = False
-
-    ### Keeps a list of tracked messages ids ###
+    #will change this to a hashmap/dictionary for better performance
     received_messages = []
-
-    # ip_addresses = map()
 
     active_clients = list()
     public_keys = list()  ### For now we can store it in a list, later we can find a more secure way to store it ###
     questions = list()
     answers = list()
 
-    UDPserver = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-
-    #################################### HELPER FUNCTIONS FOR SERVER ###########################################
-    ### A Keep alive protocol that ensures a client is still active ###
-    #def _keep_alive(self):
-    #    while True:
-    #        time.sleep(50)
-    #        UDPserver.sendto("Are you still there?".encode('ascii'), ('', localPort))
-
-    def _reset_UDP_server(self):
-        UDPserver.close()
-        self.__init__()
-        main()
-
-    ##########################################################################################################
+    def __init__(self):
+        self.inputData = None
+        self.UDPserver = None
+        self.Client = None
+        self.threadInput = None
+        self.threadClient = None
+        self.threadUDPserver = None
+        self.active_clients.clear()
+        self.createSocket()
+        print("Central Server Initialized : {}:{}".format(self.fetch_ip_address(), self.localPort))
 
     def fetch_ip_address(self):
         ip_address = ''
@@ -65,22 +53,52 @@ class CentralServer:
             s.close()
         return ip_address
 
-    def __init__(self):
-        active_clients.clear()
-        UDPserver.bind(('', localPort))
-        UDPserver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        UDPserver.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    def createSocket(self):
+        self.threadInput = threading.Thread(target=self.getAsynchrounous_input)
+        self.threadInput.daemon = True
+        self.threadInput.start()
 
-        ### A temporary timeout for the server in order to prevent it from running forever for testing purposes ###
-        UDPserver.settimeout(500)  # Comment for infinite timeout
+        self.UDPserver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
+        self.UDPserver.bind(('', self.localPort))
 
-        print("Central Server Initialized : {}:{}".format(self.fetch_ip_address(), localPort))
+        self.threadUDPserver = threading.Thread(target=self.getUDPserver_input)
+        self.threadUDPserver.daemon = True
+        self.threadUDPserver.start()
 
-    def parse_message(data, addr):
+        self.Client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
+        #self.Client.bind(('', self.localPort)) No way to know until client establishes connection
+
+        self.threadClient = threading.Thread(target=self.getClient_input)
+        self.threadClient.daemon = True
+        self.threadClient.start()
+        
+        print("Current system: ", os.name)
+        if (os.name == "posix"):
+            self.UDPserver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+            self.Client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        else:
+            self.UDPserver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.Client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def getAsynchrounous_input(self):
+        while True:
+            self.inputData = input()
+
+    def getUDPserver_input(self):
+        while True:
+            data, addr = self.UDPserver.recvfrom(self.bufferSize)
+            self.receive_message(data, addr)
+
+    def getClient_input(self):
+        while True:
+            data, addr = self.Client.recvfrom(self.bufferSize)
+            self.receive_message(data, addr)
+
+    def parse_message(self, data, addr):
         addr = "68.99.192.233"
         if data.decode() == "ackcon":
             print("Client from {} has successfully connected to the Server".format(addr))
-            active_clients.append(addr)
+            self.active_clients.append(addr)
 
         elif data.decode() == "comrequest":
             print("Client from {} has requested to communicate with another client".format(addr))
@@ -89,12 +107,12 @@ class CentralServer:
 
         elif data.decode() == "ackpubip":
             print("Client from {} has sent their public key to the server".format(addr))
-            if InitiateCommunication:
+            if self.InitiateCommunication:
                 CentralServer.store_public_key(data, addr)
             else:
-                print(received_messages)
-                received_messages.remove(received_messages[-1])
-                print(received_messages)
+                print(self.received_messages)
+                self.received_messages.remove(self.received_messages[-1])
+                print(self.received_messages)
                 print("There is no client requesting to communicate.")
 
         elif data.decode() == "ackquestion":
@@ -113,80 +131,77 @@ class CentralServer:
             print("Message not recognized")
             return None
 
-    def initiate_communication(data, addr):
+    def initiate_communication(self, data, addr):
         ### Checks if there is two clients simultaneously requesting to communicate ###
-        print(active_clients)
+        print(self.active_clients)
 
         print("Error: No other client is requesting to communicate")
         # if active_clients[0][0] != active_clients[1][0]:
         #    print("Two clients have requested to communicate with each other")
         #     print("Client {} and Client {} are trying to communicate".format(active_clients[0], active_clients[1]))
-        global InitiateCommunication
-        InitiateCommunication = True
 
     #### Helper functions to store the data from the client ####
     ## Will need more information as to how to maintain the ordering of the UDP packets in order to store the data correctly ##
-    def store_public_key(data, addr):
-        public_keys.append(data)
+    def store_public_key(self, data, addr):
+        self.public_keys.append(data)
 
-    def store_question(data, addr):
-        questions.append(data)
+    def store_question(self, data, addr):
+        self.questions.append(data)
 
-    def store_answer(data, addr):
-        answers.append(data)
+    def store_answer(self, data, addr):
+        self.answers.append(data)
 
-    def receive_message(data, addr):
-        message_bytes = bytes(data.decode(), 'ascii')
-        message_id = struct.unpack('!I', message_bytes[:4])[0]
-        print(message_id)
+    def receive_message(self, data, addr):
 
-        ### Checks if the message has already been received before ###
-        if message_id in received_messages:
-            print("Message already received")
-            pass
+        message_hash = hashlib.sha256(data).hexdigest()
+
+        if not self.received_messages:
+            self.received_messages.append([addr, message_hash])
         else:
-            received_messages.append(message_id)
-            CentralServer.parse_message(data, addr)
-            print(message_bytes)  ### For testing purposes ###
+            for address, message in self.received_messages:
+                if address[0] == addr[0] and message == message_hash:
+                    print("Original message: ", message)
+                    print("Message hash: ", message_hash)
+                    print("Message already received from same IP address. Ignoring message.")
+                    return
+            print("Received Message: \n{} \nfrom {}".format(data.decode(), addr))
+            print("Message hash: ", message_hash)
+            self.received_messages.append([addr, message_hash])
+            self.parse_message(data, addr)
 
+    def startup(self):
+        while True:
+            #localInput = self.inputData
+            #self.inputData = ""
+            data, address = self.UDPserver.recvfrom(self.bufferSize)
+            self.receive_message(data, address)
 
+    #################################### HELPER FUNCTIONS FOR SERVER ###########################################
+    ### A Keep alive protocol that ensures a client is still active ###
+    #def _keep_alive(self):
+    #    while True:
+    #        time.sleep(50)
+    #        UDPserver.sendto("Are you still there?".encode('ascii'), ('', localPort))
+
+    #def _reset_UDP_server(self):
+    #    UDPserver.close()
+    #    self.__init__()
+    #    main()
 
     ### Pickle will be used to transport the list of IPs to the forwarder ###
-    def package_constructor(self):
+    #def package_constructor(self):
         # pickled_data = pickle.dumps(ip_addresses)
         ### Only the forwarder should receive the pickled data, and should never be shared with the client besides the
         # forwarder ip_address ###
-        return 0  # pickled_data
+    #    return 0  # pickled_data
+
+    ##########################################################################################################
+
 
 def main():
-    print("Timer has started for 2 minutes")
-    while True:
-        time1 = time.perf_counter()
-        time2 = time.perf_counter()
-        if time2 - time1 > 10:
-            print("Timer has ended")
-            break
-        else:
-            data, addr = UDPserver.recvfrom(bufferSize)
-            CentralServer.receive_message(data, addr)
-            addr = "68.99.192.233"
-            print("received message: {} from {}".format(data, addr))  ### For testing purposes ###
-            print("Timer has started for 2 minutes")
-
-    print("Timer has ended")
+    server = CentralServer()
+    server.startup()
 
 if __name__ == "__main__":
     print(os.name)
     main()
-
-    class IP_mapper:
-        ip_address1 = ""
-        ip_address2 = ""
-        port1 = 0
-        port2 = 0
-
-        def __init__(self, ip1, ip2, p1, p2):
-            self.ip_address1 = ip1
-            self.ip_address2 = ip2
-            self.port1 = p1
-            self.port2 = p2
