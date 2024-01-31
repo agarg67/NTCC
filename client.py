@@ -188,7 +188,7 @@ class Client:
             if(self.centralData!=""):
                 print(self.centralData)
                 localCentralData=self.centralData[0]
-                
+                localaddr=self.centralData[1]
                 self.centralData=""
                 
                 if(localCentralData=="ackpubip"):
@@ -271,8 +271,8 @@ def main(): # entry function of the program
     while(randPort2==randPort):
         randPort2=random.randrange(1500, 50000, 1)
     
-    print(randPort)
-    print(randPort2)
+    print("central port:",randPort)
+    print("relay port",randPort2)
     print(localIP)
     
     #creating a client object to start program 
