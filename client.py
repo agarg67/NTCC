@@ -17,7 +17,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp=""
+    centralServerIp="10.157.125.185"
     centralServerPort=20001 # port is fixed up
     
     relayServerIpList=[]
