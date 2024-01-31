@@ -157,6 +157,7 @@ class CentralServer:
 
         if not self.received_messages:
             self.received_messages.append([addr, message_hash])
+            print("Received Message: \n{} \nfrom {}".format(data.decode(), addr))
         else:
             for address, message in self.received_messages:
                 if address[0] == addr[0] and message == message_hash:
@@ -175,6 +176,9 @@ class CentralServer:
             #self.inputData = ""
             data, address = self.UDPserver.recvfrom(self.bufferSize)
             self.receive_message(data, address)
+            start = time.perf_counter()
+            print("Socket has been open for {} seconds".format(time.perf_counter()-start))
+            #self.UDPserver.timeout(2)
 
     #################################### HELPER FUNCTIONS FOR SERVER ###########################################
     ### A Keep alive protocol that ensures a client is still active ###
