@@ -38,8 +38,8 @@ class Relay:
 
 
     def run_program(self):
-        t1 = threading.Thread(target=self.recieve)
-        t2 = threading.Thread(target=self.relay)
+        t1 = threading.Thread(target=self.recieve).start()
+        t2 = threading.Thread(target=self.relay).start()
 
 def main():
     reciever = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
