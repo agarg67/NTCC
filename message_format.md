@@ -19,7 +19,8 @@ Client (sending messages):
 - sendquestion <question id> <question>: Used to send the question to server to start intial communication
 - answerquestion <question id> <answer>: answer a provided question
 - ackanswer <question id>: Accept question's answer
-- ackdis: request to disconnect from Central server
+- nakanswer <question id>: Reject question's answer
+- disreq: request to disconnect from Central server
 - comrequest: request comunication to start
 - acksendcomereq: accept the list of ip addresses and public key
 - message <message id> <messsage>: sending a message to a user
