@@ -25,21 +25,21 @@ class Relay:
     def recieve(self):
         while True:
             try:
-                message ,_ = server.recvfrom(2048)
+                message ,_ = self.server.recvfrom(2048)
                 self.messages.put(message)
             except:
                 pass
 
     def relay(self):
-        while not messages.empty():
+        while not self.messages.empty():
             message = self.messages.get()
 
-            server.sendto(message, ("127.0.0.1", 20001)) #subject to change
+            self.server.sendto(message, ("127.0.0.1", 20001)) #subject to change
 
 
     def run_program(self):
-        t1 = threading.Thread(target=recieve)
-        t2 = threading.Thread(target=relay)
+        t1 = threading.Thread(target=self.recieve)
+        t2 = threading.Thread(target=self.relay)
 
 def main():
     reciever = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
