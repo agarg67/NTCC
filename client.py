@@ -17,7 +17,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="10.157.125.185"
+    centralServerIp="192.168.243.148"
     centralServerPort=20001 # port is fixed up
     
     relayServerIpList=[]
@@ -123,6 +123,7 @@ class Client:
     def sendPublickeyIP(self):
         message="sendpubip" + " <" + str(self.publicKeySelf) + ">" + " <" + str(self.client_ip_address) + ">"
         
+        print(message)
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
         
