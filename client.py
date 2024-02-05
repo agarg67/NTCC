@@ -16,8 +16,9 @@ class Client:
     client_ip_address="localhost"
     clientCentralPort=0  
     clientRelayPort=0
-
     centralServerIp="192.168.244.140"
+
+    centralServerIp=""
     centralServerPort=20001 # port is fixed up
     
     relayServerIpList=[]
@@ -123,6 +124,7 @@ class Client:
     def sendPublickeyIP(self):
         message="sendpubip" + " <" + str(self.publicKeySelf) + ">" + " <" + str(self.client_ip_address) + ">"
         
+        print(message)
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
         
@@ -188,7 +190,7 @@ class Client:
             if(self.centralData!=""):
                 print(self.centralData)
                 localCentralData=self.centralData[0]
-                
+                localaddr=self.centralData[1]
                 self.centralData=""
                 
                 if(localCentralData=="ackpubip"):
@@ -243,8 +245,7 @@ class Client:
                     
                     #space here to code for more things
                     
-                    
-                           
+                          
 
 def get_local_ip(): # this method is used to resolve your own ip address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -271,8 +272,8 @@ def main(): # entry function of the program
     while(randPort2==randPort):
         randPort2=random.randrange(1500, 50000, 1)
     
-    print(randPort)
-    print(randPort2)
+    print("central port:",randPort)
+    print("relay port:",randPort2)
     print(localIP)
     
     #creating a client object to start program 
