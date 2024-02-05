@@ -244,8 +244,7 @@ class Client:
                     
                     #space here to code for more things
                     
-                    
-                           
+                          
 
 def get_local_ip(): # this method is used to resolve your own ip address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -273,7 +272,7 @@ def main(): # entry function of the program
         randPort2=random.randrange(1500, 50000, 1)
     
     print("central port:",randPort)
-    print("relay port",randPort2)
+    print("relay port:",randPort2)
     print(localIP)
     
     #creating a client object to start program 
