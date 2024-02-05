@@ -16,6 +16,7 @@ class Client:
     client_ip_address="localhost"
     clientCentralPort=0  
     clientRelayPort=0
+    centralServerIp="192.168.244.140"
 
     centralServerIp="192.168.244.140"
     centralServerPort=20001 # port is fixed up
