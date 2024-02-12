@@ -16,10 +16,12 @@ class Client:
     client_ip_address="localhost"
     clientCentralPort=0  
     clientRelayPort=0
-    centralServerIp="192.168.244.140"
 
     centralServerIp="192.168.244.140"
     centralServerPort=20001 # port is fixed up
+
+    forwarderServerIp="localhost"
+    forwarderServerPort= 9999
     
     relayServerIpList=[]
     relayServerPortList=[]
@@ -126,6 +128,8 @@ class Client:
         
         print(message)
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
+        #for testing
+        self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
         
         
     def sendQuestionToServer(self, question):

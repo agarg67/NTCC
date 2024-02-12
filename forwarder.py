@@ -11,24 +11,41 @@ import time
 
 class Relay:
     server=""
-    serverport=0
-
+    serverport=9999
+    bufferSize = 4096
     messages = queue.Queue()
     client = []
     
 
-    def __init__(self, message, addr, portpass):
-        self.server = addr
-        self.serverport = portpass
+    def __init__(self):
+        self.recieve = None
+        self.send = None
+        self.createSocket()
 
+    def createSocket(self):
 
-    def recieve(self):
+        self.UDPserver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
+        self.UDPserver.bind(('', self.serverport))
+
+        self.recieve = threading.Thread(target=self.getUDPserver_input)
+        self.recieve.daemon = True
+        self.recieve.start()
+
+        self.send = threading.Thread(target=self.relay)
+        self.send.daemon = True
+        self.send.start()
+
+    def getUDPserver_input(self):
         while True:
-            try:
-                message ,_ = self.server.recvfrom(2048)
-                self.messages.put(message)
-            except:
-                pass
+            data, addr = self.UDPserver.recvfrom(self.bufferSize)
+            self.receive_message(data, addr)
+
+    def receive_message(self, message, addr):
+        try:
+            self.messages.put(message)
+            print(message.decode())
+        except:
+            pass
 
     def relay(self):
         while not self.messages.empty():
@@ -38,15 +55,14 @@ class Relay:
 
 
     def run_program(self):
-        t1 = threading.Thread(target=self.recieve).start()
-        t2 = threading.Thread(target=self.relay).start()
+        while True:
+            data, address = self.UDPserver.recvfrom(self.bufferSize)
+            self.receive_message(data, address)
 
 def main():
-    reciever = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    reciever.bind(("localhost", 9999))
-    message, addr, port = reciever.recvfrom(2048)
-    relay = Relay(message, addr, port)
+    relay = Relay()
+    relay.run_program()
 
-    Relay.run_program()
-
-main()
+if __name__ == "__main__":
+    print(os.name)
+    main()
