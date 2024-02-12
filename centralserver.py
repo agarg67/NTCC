@@ -70,7 +70,7 @@ class CentralServer:
 
         self.threadClient = threading.Thread(target=self.getClient_input)
         self.threadClient.daemon = True
-        self.threadClient.start()
+        #self.threadClient.start()
         
         print("Current system: ", os.name)
         if (os.name == "posix"):
