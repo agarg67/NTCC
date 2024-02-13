@@ -1,5 +1,5 @@
 # NTCC
-CSE485 Capstone
+CSE486 Capstone
 
 
 
