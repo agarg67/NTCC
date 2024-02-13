@@ -13,7 +13,7 @@ class Relay:
     server=""
     serverport=9999
     bufferSize = 4096
-    messages = queue.Queue()
+    mainMsg = ""
     client = []
     
 
@@ -33,7 +33,7 @@ class Relay:
 
         self.send = threading.Thread(target=self.relay)
         self.send.daemon = True
-        self.send.start()
+        #self.send.start()
 
     def getUDPserver_input(self):
         while True:
@@ -42,16 +42,16 @@ class Relay:
 
     def receive_message(self, message, addr):
         try:
-            self.messages.put(message)
+            mainMsg = message.decode()
             print(message.decode())
+            self.UDPserver.sendto(mainMsg.encode(),("localhost", 20001))
         except:
             pass
 
     def relay(self):
-        while not self.messages.empty():
-            message = self.messages.get()
-
-            self.server.sendto(message, ("127.0.0.1", 20001)) #subject to change
+            print(self.mainMsg)
+            self.UDPserver.sendto("hey".encode(),("localhost", 20001))
+            self.UDPserver.sendto(self.mainMsg.encode(),("localhost", 20001)) #subject to change
 
 
     def run_program(self):
