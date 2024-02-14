@@ -2,32 +2,37 @@ Central Server (sending messages):
  ````
  The format of the messages that the server can receive is as follows:
  - ackcon: received initial request to connect from client
- - ackpubip: received public key and ip address from client
  - ackquestion: received question from client
  - ackanswer: received answer from client
  - defaultclientcheck: checks if there is a client on the opposite side of the communication
  - comrequest: received request to start communication
- - sendcomreq <public key> <(ip1 port1) (ip2 port2) ...>: send public key and a list of ip addresses to the client 
+ * - sendcomreq <public key> <(ip1 port1) (ip2 port2) ...>: send public key and a list of ip addresses to the client 
  - sendipmapper <object of ipmap>: send ip addresses to the forwarder and noise generator
  - receivedis: received request to disconnect from client
+
+* This would be redundant and unnecessary to send to the client as it will be determined by the active clients
+
  ````
 
 Client (sending messages):
 ````
-- reqcon: used to start initial connection between client and central server. If successful, the client sends its public key and ip address
+* - reqcon: used to start initial connection between client and central server. If successful, the client sends its public key and ip address
 - sendpubip <public key> <ip address>: used to send the public key and ip address to the central server
 - sendquestion <question id> <question>: Used to send the question to server to start intial communication
 - answerquestion <question id> <answer>: answer a provided question
-- ackanswer <question id>: Accept question's answer
-- nakanswer <question id>: Reject question's answer
+* - ackanswer <question id>: Accept question's answer
+* - nakanswer <question id>: Reject question's answer
 - disreq: request to disconnect from Central server
 - comrequest: request comunication to start
-- acksendcomereq: accept the list of ip addresses and public key
+* - acksendcomereq: accept the list of ip addresses and public key
 - message <message id> <messsage>: sending a message to a user
 - messageack <message id>: implicit ack sends
 - terminatecom: terminate communication
 - terminatecomack: accept to terminate communication
+
+* The following have been marked redundant and would need further analysis.
 ````
+
 
 Forwarder:
 ````

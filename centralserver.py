@@ -10,7 +10,11 @@ import threading
 import time
 import rsa
 
-
+''' 
+    Should have the central server send it's messages to the relay server rather than directly send it to other clients, 
+    as that is an initial point of weakness since the messages can be traced to each client due to the same point of 
+    initial contact.
+'''
 class CentralServer:
 
     # Vital Parameters for the Central Server
@@ -27,6 +31,8 @@ class CentralServer:
     answers = list()
 
     def __init__(self):
+        #self.rsaPublicKey = None
+        #self.rsaPrivateKey = None
         self.inputData = None
         self.UDPserver = None
         self.Client = None
@@ -65,20 +71,19 @@ class CentralServer:
         self.threadUDPserver.daemon = True
         self.threadUDPserver.start()
 
-        self.Client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
-        #self.Client.bind(('', self.localPort)) No way to know until client establishes connection
-
-        self.threadClient = threading.Thread(target=self.getClient_input)
-        self.threadClient.daemon = True
-        #self.threadClient.start()
-        
         print("Current system: ", os.name)
         if (os.name == "posix"):
             self.UDPserver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-            self.Client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         else:
             self.UDPserver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.Client.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
+    def rsa_keyGen(self):
+        self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(2048)
+        #print(self.rsaPublicKey)
+        #print(self.rsaPrivateKey)
+        if (self.rsaPublicKey and self.rsaPrivateKey) is not None:
+            return True
+        return False
 
     def getAsynchrounous_input(self):
         while True:
@@ -95,38 +100,38 @@ class CentralServer:
             self.receive_message(data, addr)
 
     def parse_message(self, data, addr):
-        addr = "68.99.192.233"
-        if data.decode() == "ackcon":
-            print("Client from {} has successfully connected to the Server".format(addr))
+
+        #addr = "68.99.192.233"
+
+        print("This is the data received: {}".format(data))
+        print("\nThis is the data received from: {}".format(addr))
+
+        original_message = data.decode()
+        message_identifier = original_message.split(" <")
+
+        if message_identifier[0] == "sendpubip":
             self.active_clients.append(addr)
+            message_identifier[1] = message_identifier[1].replace(">", "")
+            print(message_identifier[1])
+            self.public_keys.append(message_identifier[1])
+            print("Public Key received")
+            message = "ackcon" + " <" + str(self.rsaPublicKey) + "> "
+            self.UDPserver.sendto(message.encode(), addr)
 
-        elif data.decode() == "comrequest":
-            print("Client from {} has requested to communicate with another client".format(addr))
-            # active_clients.append(('565.512.512.512', 20002)) ### Fake Client for testing purposes ###
-            CentralServer.initiate_communication(data, addr)
+        elif message_identifier[0] == "sendquestion":
+            print("Question received from Client with {}".format(addr))
+            ##WOULD NEED TO KNOW THE FORMAT OF THE QUESTION MESSAGE
+            self.questions.append(message_identifier[1])
+            message = "ackquestion" + " <" + message_identifier[2] + "> "#This will be the question ID received
+            self.UDPserver.sendto(message.encode(), addr)
 
-        elif data.decode() == "ackpubip":
-            print("Client from {} has sent their public key to the server".format(addr))
-            if self.InitiateCommunication:
-                CentralServer.store_public_key(data, addr)
-            else:
-                print(self.received_messages)
-                self.received_messages.remove(self.received_messages[-1])
-                print(self.received_messages)
-                print("There is no client requesting to communicate.")
+        elif message_identifier[0] == "answerquestion":
+            print("Answer received from User")
+            ##NEED To REPLACE WITH FORMAT
 
-        elif data.decode() == "ackquestion":
-            print("Client from {} has sent their question to the server".format(addr))
-            CentralServer.store_question(data, addr)
-
-        elif data.decode() == "ackanswer":
-            print("Client from {} has sent their answer to the server".format(addr))
-            CentralServer.store_answer(data, addr)
-
-        elif data.decode() == "ackdis":
-            print("Client from {} has disconnected from the server".format(addr))
-            CentralServer._reset_UDP_server()
-
+        elif message_identifier[0] == "comrequest":
+            print("Client has requested to communicate with another client. Fetching active clients list:")
+            print(self.active_clients[:])
         else:
             print("Message not recognized")
             return None
@@ -167,15 +172,30 @@ class CentralServer:
                     return
             print("Received Message: \n{} \nfrom {}".format(data.decode(), addr))
             print("Message hash: ", message_hash)
-            self.received_messages.append([addr, message_hash])
-            self.parse_message(data, addr)
+        self.received_messages.append([addr, message_hash])
+        self.parse_message(data, addr)
 
     def startup(self):
+
+        self.rsa_keyGen()
+        numFailures = 0
+
         while True:
             #localInput = self.inputData
             #self.inputData = ""
             data, address = self.UDPserver.recvfrom(self.bufferSize)
-            self.receive_message(data, address)
+
+
+
+            if self.rsa_keyGen():
+                numFailures=0
+                self.receive_message(data, address)
+            else:
+                numFailures+=1
+                print("\nServer has failed to generate RSA keys, retrying...")
+                if numFailures == 10:
+                    print("\nCentral Server is unable to generate RSA keys, aborting all operations.")
+                    exit(42)
             start = time.perf_counter()
             print("Socket has been open for {} seconds".format(time.perf_counter()-start))
             #self.UDPserver.timeout(2)
@@ -200,6 +220,7 @@ class CentralServer:
     #    return 0  # pickled_data
 
     ##########################################################################################################
+
 
 
 def main():
