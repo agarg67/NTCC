@@ -7,8 +7,7 @@ import random
 import threading
 import time
 import rsa
-from Crypto.PublicKey import RSA
-from Crypto import Random
+
 
 # client class
 # contains bulk of the code for socket communication
@@ -56,10 +55,10 @@ class Client:
         self.clientRelayPort=portPass2
         
         #key=rsa.generate(1024)
-        #self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
-        random_generator = Random.new().read
-        self.privatekeySelf=RSA.generate(1024, random_generator)
-        self.publicKeySelf=self.privatekeySelf.publickey()
+        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
+        #random_generator = Random.new().read
+        #self.privatekeySelf=RSA.generate(1024, random_generator)
+        #self.publicKeySelf=self.privatekeySelf.publickey()
         
         
         print(self.publicKeySelf)
