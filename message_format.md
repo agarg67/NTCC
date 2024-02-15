@@ -1,7 +1,7 @@
 Central Server (sending messages):
  ````
  The format of the messages that the server can receive is as follows:
- - ackcon: received initial request to connect from client
+ - ackcon <Public Key>: received initial request to connect from client and servers public key
  - ackquestion: received question from client
  - ackanswer: received answer from client
  - defaultclientcheck: checks if there is a client on the opposite side of the communication
@@ -18,7 +18,7 @@ Client (sending messages):
 ````
 * - reqcon: used to start initial connection between client and central server. If successful, the client sends its public key and ip address
 - sendpubip <public key> <ip address>: used to send the public key and ip address to the central server
-- sendquestion <question id> <question>: Used to send the question to server to start intial communication
+- sendquestion <question id> <question> <answer>: Used to send the question to server to start intial communication
 - answerquestion <question id> <answer>: answer a provided question
 * - ackanswer <question id>: Accept question's answer
 * - nakanswer <question id>: Reject question's answer

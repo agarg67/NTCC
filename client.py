@@ -42,6 +42,7 @@ class Client:
     
     publickeyPeer=""
     
+    publickeyserver=""
     questionId=0
     messageId=0
     
@@ -105,18 +106,21 @@ class Client:
             
     def parseIncomingMessage(self, messageToParse):
         finalArr=[]
-        
+        print("message to parse:\n", messageToParse)
         if("<" not in messageToParse):
             finalArr.append(messageToParse)
             return finalArr
         
         tempArr=messageToParse.split("<")
-        
+        print(tempArr)
         for i in range(len(tempArr)):
             tempArr[i]=tempArr[i].strip()
-            
+        
+        print(tempArr) 
         for i in range(1,len(tempArr)):
-            tempArr[i]=tempArr[i][1:len(tempArr)-1]
+            tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
+        
+        print(tempArr)
         
         finalArr=tempArr
         
@@ -132,10 +136,12 @@ class Client:
         #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
         
         
-    def sendQuestionToServer(self, question):
-        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">"
+    def sendQuestionToServer(self, question, answer):
+        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
         
-        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
+        print(message.encode())
+        encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
+        self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
         self.questionId+=1
         
@@ -180,6 +186,28 @@ class Client:
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
                     
+                elif(localInputData=="sendquestion"):
+                    
+                    print("Please enter your question:")
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    question=self.inputData
+                    self.inputData=""
+                    
+                    print("Please enter your answer:")
+                    
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                        
+                    answer=self.inputData
+                    self.inputData=""
+                    
+                    self.sendQuestionToServer(question, answer)
+                        
+                        
+                    
+                    
                 
             if(self.relayData!=""):
                 print(self.relayData)
@@ -197,8 +225,14 @@ class Client:
                 localaddr=self.centralData[1]
                 self.centralData=""
                 
-                if(localCentralData=="ackpubip"):
+                if(b"ackcon" in localCentralData):
                     print("public key sent to server")
+                    parsedDataArr=self.parseIncomingMessage(localCentralData.decode())
+                    print(parsedDataArr)
+                    
+                    self.publickeyserver=parsedDataArr[1]
+                    
+                    print(self.publickeyserver)
                 
                 if(b"sendquestion" in localCentralData):
                     
