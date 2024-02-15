@@ -129,7 +129,7 @@ class Client:
         print(message)
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         #for testing
-        self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
+        #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
         
         
     def sendQuestionToServer(self, question):
@@ -200,7 +200,7 @@ class Client:
                 if(localCentralData=="ackpubip"):
                     print("public key sent to server")
                 
-                if("sendquestion" in localCentralData):
+                if(b"sendquestion" in localCentralData):
                     
                     questionAnswer=""
                     parsedMessage= self.parseIncomingMessage(localCentralData.decode())
@@ -214,7 +214,7 @@ class Client:
                     
                     self.answerQuestion(parsedMessage[1], questionAnswer)
                     
-                if("answerquestion" in localCentralData):
+                if(b"answerquestion" in localCentralData):
                     acceptOrReject="No"
                     
                     parsedMessage = self.parseIncomingMessage(localCentralData.decode())
@@ -239,12 +239,12 @@ class Client:
                     
                     self.UDPClientCentralSocket.sendto(replytoSend.encode(),(self.centralServerIp, self.centralServerPort))
                     
-                if("ackanswer" in localCentralData):
+                if(b"ackanswer" in localCentralData):
                     print("Your Answer has been accepted, we will move forward with completing the connection!")
                     
                     #space here to code for getting ip map and public key
                 
-                if("nakanswer" in localCentralData):
+                if(b"nakanswer" in localCentralData):
                     print("Your answer has been rejected, please try from begining. Current session is terminated")
                     
                     #space here to code for more things
