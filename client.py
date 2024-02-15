@@ -7,6 +7,8 @@ import random
 import threading
 import time
 import rsa
+from Crypto.PublicKey import RSA
+from Crypto import Random
 
 # client class
 # contains bulk of the code for socket communication
@@ -53,7 +55,12 @@ class Client:
         self.clientCentralPort=portPass
         self.clientRelayPort=portPass2
         
-        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
+        #key=rsa.generate(1024)
+        #self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
+        random_generator = Random.new().read
+        self.privatekeySelf=RSA.generate(1024, random_generator)
+        self.publicKeySelf=self.privatekeySelf.publickey()
+        
         
         print(self.publicKeySelf)
         print(self.privatekeySelf)
@@ -128,10 +135,11 @@ class Client:
         
             
     def sendPublickeyIP(self):
-        message="sendpubip" + " <" + str(self.publicKeySelf) + ">" + " <" + str(self.client_ip_address) + ">"
+        messagPubkey= self.publicKeySelf.exportKey()
+        message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
         print(message)
-        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
+        self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
         #for testing
         #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
         
@@ -187,8 +195,7 @@ class Client:
                     self.sendPublickeyIP()
                     
                 elif(localInputData=="sendquestion"):
-                    
-                    print("Please enter your question:")
+                    print("send question:")
                     while(self.inputData==""):
                         time.sleep(0.0001)
                     
@@ -232,7 +239,9 @@ class Client:
                     
                     self.publickeyserver=parsedDataArr[1]
                     
+                    self.publickeyserver=rsa.PublicKey.load_pkcs1(self.publickeyserver)
                     print(self.publickeyserver)
+                    
                 
                 if(b"sendquestion" in localCentralData):
                     
