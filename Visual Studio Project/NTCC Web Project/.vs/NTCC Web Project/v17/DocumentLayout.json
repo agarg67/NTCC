@@ -3,12 +3,20 @@
   "WorkspaceRootPath": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\__init__.py||{8B382828-6202-11D1-8870-0000F87579D2}",
-      "RelativeMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|solutionrelative:NTCC_Web_Project\\__init__.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+      "AbsoluteMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\runserver.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|solutionrelative:runserver.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}",
       "RelativeMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|solutionrelative:NTCC_Web_Project\\views.py||{8B382828-6202-11D1-8870-0000F87579D2}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\templates\\connection.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|solutionrelative:NTCC_Web_Project\\templates\\connection.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\__init__.py||{8B382828-6202-11D1-8870-0000F87579D2}",
+      "RelativeMoniker": "D:0:0:{ED92F09A-8F11-4142-A2CB-77204A7B2C2C}|NTCC Web Project.pyproj|solutionrelative:NTCC_Web_Project\\__init__.py||{8B382828-6202-11D1-8870-0000F87579D2}"
     }
   ],
   "DocumentGroupContainers": [
@@ -18,24 +26,37 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 0,
+          "SelectedChildIndex": 1,
           "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "__init__.py (NTCC_Web_Project)",
-              "DocumentMoniker": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\__init__.py",
-              "RelativeDocumentMoniker": "NTCC_Web_Project\\__init__.py",
-              "ToolTip": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\__init__.py",
-              "RelativeToolTip": "NTCC_Web_Project\\__init__.py",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAgAAAAPAAAA",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
-              "WhenOpened": "2024-02-13T20:13:42.792Z",
-              "EditorCaption": ""
-            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "runserver.py",
+              "DocumentMoniker": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\runserver.py",
+              "RelativeDocumentMoniker": "runserver.py",
+              "ToolTip": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\runserver.py",
+              "RelativeToolTip": "runserver.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAABUAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2024-02-14T23:04:54.727Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "connection.html",
+              "DocumentMoniker": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\templates\\connection.html",
+              "RelativeDocumentMoniker": "NTCC_Web_Project\\templates\\connection.html",
+              "ToolTip": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\templates\\connection.html",
+              "RelativeToolTip": "NTCC_Web_Project\\templates\\connection.html",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAA8AAABDAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2024-02-14T22:58:17.574Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
@@ -45,9 +66,22 @@
               "RelativeDocumentMoniker": "NTCC_Web_Project\\views.py",
               "ToolTip": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\views.py",
               "RelativeToolTip": "NTCC_Web_Project\\views.py",
-              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAwAAAAbAAAA",
+              "ViewState": "AQIAABgAAAAAAAAAAAAYwCgAAAAFAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
               "WhenOpened": "2024-02-13T19:57:42.743Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "__init__.py (NTCC_Web_Project)",
+              "DocumentMoniker": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\__init__.py",
+              "RelativeDocumentMoniker": "NTCC_Web_Project\\__init__.py",
+              "ToolTip": "C:\\Users\\harry\\Documents\\GitHub\\NTCC\\Visual Studio Project\\NTCC Web Project\\NTCC_Web_Project\\__init__.py",
+              "RelativeToolTip": "NTCC_Web_Project\\__init__.py",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAoAAAABAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.002457|",
+              "WhenOpened": "2024-02-13T20:13:42.792Z",
               "EditorCaption": ""
             }
           ]

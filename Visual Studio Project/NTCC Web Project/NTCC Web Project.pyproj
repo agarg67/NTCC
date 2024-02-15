@@ -42,6 +42,7 @@
     <Folder Include="NTCC_Web_Project\templates\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="NTCC_Web_Project\templates\connection.html" />
     <Content Include="requirements.txt" />
     <Content Include="NTCC_Web_Project\static\content\bootstrap.css" />
     <Content Include="NTCC_Web_Project\static\content\bootstrap.min.css" />
