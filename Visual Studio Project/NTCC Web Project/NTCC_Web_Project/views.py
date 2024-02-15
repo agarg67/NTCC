@@ -3,7 +3,7 @@ Routes and views for the flask application.
 """
 
 from datetime import datetime
-from flask import render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for
 from NTCC_Web_Project import app
 from client import Client  # Ensure client.py is properly referenced
 
