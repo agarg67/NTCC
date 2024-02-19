@@ -193,23 +193,23 @@ class Client:
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
                     
-                elif(localInputData=="sendquestion"):
-                    print("send question:")
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                # elif(localInputData=="sendquestion"):
+                #     print("send question:")
+                #     while(self.inputData==""):
+                #         time.sleep(0.0001)
                     
-                    question=self.inputData
-                    self.inputData=""
+                #     question=self.inputData
+                #     self.inputData=""
                     
-                    print("Please enter your answer:")
+                #     print("Please enter your answer:")
                     
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                #     while(self.inputData==""):
+                #         time.sleep(0.0001)
                         
-                    answer=self.inputData
-                    self.inputData=""
+                #     answer=self.inputData
+                #     self.inputData=""
                     
-                    self.sendQuestionToServer(question, answer)
+                #     self.sendQuestionToServer(question, answer)
                         
                         
                     
@@ -233,6 +233,23 @@ class Client:
                 
                 if(b"ackcon" in localCentralData):
                     print("public key sent to server")
+                    print("please enter your question:")
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    question=self.inputData
+                    self.inputData=""
+                    
+                    print("Please enter your answer:")
+                    
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                        
+                    answer=self.inputData
+                    self.inputData=""
+                    
+                    self.sendQuestionToServer(question, answer)
+                    
                     parsedDataArr=self.parseIncomingMessage(localCentralData.decode())
                     print(parsedDataArr)
                     
