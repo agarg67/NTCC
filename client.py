@@ -276,7 +276,7 @@ class Client:
                 if(b"answerquestion" in localCentralData):
                     acceptOrReject="No"
                     
-                    parsedMessage = self.parseIncomingMessage(localCentralData.decode())
+                    parsedMessage = self.parseIncomingMessage(localCentralData)
                     
                     print("Recieved the following answer:")
                     print(parsedMessage[2])
