@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="localhost"
+    centralServerIp="192.168.36.140"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -66,6 +66,7 @@ class Client:
         
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
+        
         
         self.questionId=random.randrange(qid_base, qid_base*10000, 4)
         self.messageId=random.randrange(mid_base, mid_base*10000, 3)
@@ -119,14 +120,19 @@ class Client:
         
         tempArr=messageToParse.split(b"<")
         print(tempArr)
-        for i in range(len(tempArr)):
-            tempArr[i]=tempArr[i].strip()
+        
+        if(b"ackcon" in tempArr[0]):
+            tempArr[0]=tempArr[0].decode().strip()
+            tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1]-1)])
+            
+        # for i in range(len(tempArr)):
+        #     tempArr[i]=tempArr[i].strip()
         
         print(tempArr) 
-        for i in range(1,len(tempArr)):
-            tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
+        # for i in range(1,len(tempArr)):
+        #     tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
         
-        print(tempArr)
+        #print(tempArr)
         
         finalArr=tempArr
         
@@ -134,7 +140,7 @@ class Client:
         
             
     def sendPublickeyIP(self):
-        messagPubkey= self.publicKeySelf.exportKey()
+        messagPubkey= pickle.dumps(self.publicKeySelf)
         message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
         print(message)
@@ -233,6 +239,19 @@ class Client:
                 
                 if(b"ackcon" in localCentralData):
                     print("public key sent to server")
+                    parsedDataArr=self.parseIncomingMessage(localCentralData)
+                    print(parsedDataArr)
+                    
+                    self.publickeyserver=parsedDataArr[1]
+                    
+                    messagetoenc="hello"
+                    encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
+                    print("test encryption:")
+                    print(encmessage)
+                    
+                    self.publickeyserver=rsa.PublicKey.load_pkcs1(self.publickeyserver)
+                    print(self.publickeyserver)
+                    
                     print("please enter your question:")
                     while(self.inputData==""):
                         time.sleep(0.0001)
@@ -250,13 +269,7 @@ class Client:
                     
                     self.sendQuestionToServer(question, answer)
                     
-                    parsedDataArr=self.parseIncomingMessage(localCentralData)
-                    print(parsedDataArr)
                     
-                    self.publickeyserver=parsedDataArr[1]
-                    
-                    self.publickeyserver=rsa.PublicKey.load_pkcs1(self.publickeyserver)
-                    print(self.publickeyserver)
                     
                 
                 if(b"sendquestion" in localCentralData):
