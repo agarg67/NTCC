@@ -113,11 +113,11 @@ class Client:
     def parseIncomingMessage(self, messageToParse):
         finalArr=[]
         print("message to parse:\n", messageToParse)
-        if("<" not in messageToParse):
+        if(b"<" not in messageToParse):
             finalArr.append(messageToParse)
             return finalArr
         
-        tempArr=messageToParse.split("<")
+        tempArr=messageToParse.split(b"<")
         print(tempArr)
         for i in range(len(tempArr)):
             tempArr[i]=tempArr[i].strip()
@@ -250,7 +250,7 @@ class Client:
                     
                     self.sendQuestionToServer(question, answer)
                     
-                    parsedDataArr=self.parseIncomingMessage(localCentralData.decode())
+                    parsedDataArr=self.parseIncomingMessage(localCentralData)
                     print(parsedDataArr)
                     
                     self.publickeyserver=parsedDataArr[1]
