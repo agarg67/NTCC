@@ -101,6 +101,19 @@ class CentralServer:
 
     def parse_message(self, data, addr):
 
+        keyLength = int.from_bytes(4, 'big')
+
+        # Receive the key itself
+        publicKeyBytes = b''
+        while len(publicKeyBytes) < keyLength:
+            publicKeyBytes += keyLength - len(publicKeyBytes)
+
+
+        # Reconstruct the public key object
+        publicKey = pickle.loads(publicKeyBytes)
+
+        print(publicKey)
+
         #addr = "68.99.192.233"
 
         print("This is the data received: {}".format(data))
@@ -113,10 +126,32 @@ class CentralServer:
             self.active_clients.append(addr)
             message_identifier[1] = message_identifier[1].replace(">", "")
             print(message_identifier[1])
+
+            #public_key = pickle.loads(bytes(message_identifier[1]))
+
             self.public_keys.append(message_identifier[1])
             print("Public Key received")
-            message = "ackcon" + " <" + str(self.rsaPublicKey) + "> "
-            self.UDPserver.sendto(message.encode(), addr)
+
+
+            print(self.rsaPublicKey)
+
+            publicKeyBytes = pickle.dumps(self.rsaPublicKey)
+            self.UDPserver.sendto(len(publicKeyBytes).to_bytes(4, 'big') + publicKeyBytes, addr)
+
+
+            #message = "ackcon" + " <" + str(self.rsaPublicKey) + "> "
+            #self.UDPserver.sendto(message.encode(), addr)
+
+            print("#######################################")
+            print(self.rsaPublicKey)
+            print("\n" + self.public_keys[0])
+
+
+            test_message = "THIS IS A TEST".encode('latin')
+            ciphertext = rsa.encrypt(test_message, public_key)
+            print(ciphertext)
+            ciphertext = rsa.encrypt(test_message, self.rsaPublicKey)
+            print(ciphertext)
 
         elif message_identifier[0] == "sendquestion":
             print("Question received from Client with {}".format(addr))
@@ -160,6 +195,7 @@ class CentralServer:
 
         message_hash = hashlib.sha256(data).hexdigest()
 
+        '''
         if not self.received_messages:
             self.received_messages.append([addr, message_hash])
             print("Received Message: \n{} \nfrom {}".format(data.decode(), addr))
@@ -172,13 +208,14 @@ class CentralServer:
                     return
             print("Received Message: \n{} \nfrom {}".format(data.decode(), addr))
             print("Message hash: ", message_hash)
+            '''
         self.received_messages.append([addr, message_hash])
         self.parse_message(data, addr)
 
     def startup(self):
-
         self.rsa_keyGen()
         numFailures = 0
+
 
         while True:
             #localInput = self.inputData
