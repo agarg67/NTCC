@@ -8,6 +8,7 @@ import threading
 import time
 import rsa
 
+
 # client class
 # contains bulk of the code for socket communication
 class Client:
@@ -17,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="localhost"
+    centralServerIp="192.168.36.140"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -53,13 +54,19 @@ class Client:
         self.clientCentralPort=portPass
         self.clientRelayPort=portPass2
         
-        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
+        #key=rsa.generate(1024)
+        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
+        #random_generator = Random.new().read
+        #self.privatekeySelf=RSA.generate(1024, random_generator)
+        #self.publicKeySelf=self.privatekeySelf.publickey()
+        
         
         print(self.publicKeySelf)
         print(self.privatekeySelf)
         
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
+        
         
         self.questionId=random.randrange(qid_base, qid_base*10000, 4)
         self.messageId=random.randrange(mid_base, mid_base*10000, 3)
@@ -107,20 +114,25 @@ class Client:
     def parseIncomingMessage(self, messageToParse):
         finalArr=[]
         print("message to parse:\n", messageToParse)
-        if("<" not in messageToParse):
+        if(b"<" not in messageToParse):
             finalArr.append(messageToParse)
             return finalArr
         
-        tempArr=messageToParse.split("<")
+        tempArr=messageToParse.split(b"<")
         print(tempArr)
-        for i in range(len(tempArr)):
-            tempArr[i]=tempArr[i].strip()
+        
+        if(b"ackcon" in tempArr[0]):
+            tempArr[0]=tempArr[0].decode().strip()
+            tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1]-1)])
+            
+        # for i in range(len(tempArr)):
+        #     tempArr[i]=tempArr[i].strip()
         
         print(tempArr) 
-        for i in range(1,len(tempArr)):
-            tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
+        # for i in range(1,len(tempArr)):
+        #     tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
         
-        print(tempArr)
+        #print(tempArr)
         
         finalArr=tempArr
         
@@ -128,10 +140,11 @@ class Client:
         
             
     def sendPublickeyIP(self):
-        message="sendpubip" + " <" + str(self.publicKeySelf) + ">" + " <" + str(self.client_ip_address) + ">"
+        messagPubkey= pickle.dumps(self.publicKeySelf)
+        message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
         print(message)
-        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
+        self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
         #for testing
         #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
         
@@ -186,24 +199,23 @@ class Client:
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
                     
-                elif(localInputData=="sendquestion"):
+                # elif(localInputData=="sendquestion"):
+                #     print("send question:")
+                #     while(self.inputData==""):
+                #         time.sleep(0.0001)
                     
-                    print("Please enter your question:")
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                #     question=self.inputData
+                #     self.inputData=""
                     
-                    question=self.inputData
-                    self.inputData=""
+                #     print("Please enter your answer:")
                     
-                    print("Please enter your answer:")
-                    
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                #     while(self.inputData==""):
+                #         time.sleep(0.0001)
                         
-                    answer=self.inputData
-                    self.inputData=""
+                #     answer=self.inputData
+                #     self.inputData=""
                     
-                    self.sendQuestionToServer(question, answer)
+                #     self.sendQuestionToServer(question, answer)
                         
                         
                     
@@ -227,12 +239,38 @@ class Client:
                 
                 if(b"ackcon" in localCentralData):
                     print("public key sent to server")
-                    parsedDataArr=self.parseIncomingMessage(localCentralData.decode())
+                    parsedDataArr=self.parseIncomingMessage(localCentralData)
                     print(parsedDataArr)
                     
                     self.publickeyserver=parsedDataArr[1]
                     
+                    messagetoenc="hello"
+                    encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
+                    print("test encryption:")
+                    print(encmessage)
+                    
+                    self.publickeyserver=rsa.PublicKey.load_pkcs1(self.publickeyserver)
                     print(self.publickeyserver)
+                    
+                    print("please enter your question:")
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    question=self.inputData
+                    self.inputData=""
+                    
+                    print("Please enter your answer:")
+                    
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                        
+                    answer=self.inputData
+                    self.inputData=""
+                    
+                    self.sendQuestionToServer(question, answer)
+                    
+                    
+                    
                 
                 if(b"sendquestion" in localCentralData):
                     
@@ -251,7 +289,7 @@ class Client:
                 if(b"answerquestion" in localCentralData):
                     acceptOrReject="No"
                     
-                    parsedMessage = self.parseIncomingMessage(localCentralData.decode())
+                    parsedMessage = self.parseIncomingMessage(localCentralData)
                     
                     print("Recieved the following answer:")
                     print(parsedMessage[2])

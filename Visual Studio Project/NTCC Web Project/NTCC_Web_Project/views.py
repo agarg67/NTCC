@@ -1,58 +1,33 @@
-"""
-Routes and views for the flask application.
-"""
+from flask import render_template
+from NTCC_Web_Project import app, socketio
+from client2 import Client  # Ensure client2.py is properly referenced
 
-from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for
-from NTCC_Web_Project import app
-from client import Client  # Ensure client.py is properly referenced
-
-# Global client instance
+# Initialize your Client instance globally if needed
 client_instance = None
 
+def get_client_instance():
+    global client_instance
+    if client_instance is None:
+        client_instance = Client("localhost", 20001, 20002)  # Adjust as necessary
+    return client_instance
+
 @app.route('/')
-@app.route('/home')
 def home():
-    """Renders the home page."""
-    return render_template(
-        'index.html',
-        title='Home Page',
-        year=datetime.now().year,
-    )
+    # Initialize client instance here or in another appropriate place
+    get_client_instance()
+    return render_template('index.html', title='Home')
 
-@app.route('/contact')
-def contact():
-    """Renders the contact page."""
-    return render_template(
-        'contact.html',
-        title='Contact',
-        year=datetime.now().year,
-        message='Your contact page.'
-    )
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected to WebSocket.')
 
-@app.route('/about')
-def about():
-    """Renders the about page."""
-    return render_template(
-        'about.html',
-        title='About',
-        year=datetime.now().year,
-        message='Your application description page.'
-    )
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected from WebSocket.')
 
-@app.route('/connect', methods=['POST'])
-def connect():
-    global client_instance
-    centralServerIp = request.form['centralServerIp']
-    centralServerPort = int(request.form['centralServerPort'])
-    # Assuming client.py setup requires IP and two ports; adjust as necessary
-    client_instance = Client(centralServerIp, centralServerPort, 9999)  # Example port; adjust accordingly
-    # Add any required startup logic for client_instance here
-    return redirect(url_for('home'))
-
-@app.route('/disconnect', methods=['GET'])
-def disconnect():
-    global client_instance
-    # Add your disconnection logic here
-    client_instance = None
-    return redirect(url_for('home'))
+@socketio.on('send_command')
+def handle_command(data):
+    command = data['command']
+    print(f"Received command from web: {command}")
+    client_instance.handle_command(command)
+    socketio.emit('server_response', {'data': f'Command processed: {command}'})

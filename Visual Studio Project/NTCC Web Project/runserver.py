@@ -4,42 +4,45 @@ This script runs the NTCC_Web_Project application using a development server.
 
 from os import environ
 from NTCC_Web_Project import app
-from flask import Flask
+from flask_socketio import SocketIO
 from multiprocessing import Process
 import os
+import sys
 import shutil
 import webbrowser
 import threading
+import subprocess
 
-# Define the source and destination paths
-current_dir = os.path.dirname(os.path.abspath(__file__))
-source_path = os.path.join(current_dir, '..', '..', 'client.py')
-destination_path = os.path.join(current_dir, 'client.py')
+# Initialize Flask-SocketIO
+socketio = SocketIO(app)
 
-# Copy client.py to the current directory
-shutil.copyfile(source_path, destination_path)
+import client2
 
-import client
-
+def run_client_in_new_terminal():
+    # Directly use PowerShell's Start-Process to run client2.py in a new window
+    script_path = "client2.py"
+    # Formulate the PowerShell command to open a new Command Prompt window running the script
+    powershell_command = f'Start-Process -FilePath "cmd.exe" -ArgumentList "/k, python {script_path}"'
+    # Execute the PowerShell command
+    subprocess.Popen(["powershell", "-Command", powershell_command], shell=True)
 
 def run_client():
-    client.main() 
+    thread = threading.Thread(target=run_client_in_new_terminal)
+    thread.start()
 
 def open_browser():
-      webbrowser.open_new('http://localhost:8080/connect')
+    webbrowser.open_new('http://localhost:5555')
 
 if __name__ == '__main__':
     
-    client_process = Process(target=run_client)
-    client_process.start()
+    run_client()
 
     HOST = environ.get('SERVER_HOST', 'localhost')
     try:
-        PORT = int(environ.get('SERVER_PORT', '8080'))
+        PORT = int(environ.get('SERVER_PORT', '5555'))  # Changed port to avoid conflict with default Flask port
     except ValueError:
-        PORT = 8080
-    
-    app.run(HOST, PORT, debug=True)
-    
-    # Use threading to prevent open_browser from blocking the application
-    threading.Timer(1.25, open_browser).start()  # Adjust the delay as necessary
+        PORT = 5555
+
+    # Use SocketIO to run the app instead of app.run
+    threading.Timer(1.25, open_browser).start()  # Adjust the delay as necessary    
+    socketio.run(app, host=HOST, port=PORT, debug=True)

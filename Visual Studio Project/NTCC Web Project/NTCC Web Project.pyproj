@@ -42,7 +42,8 @@
     <Folder Include="NTCC_Web_Project\templates\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="NTCC_Web_Project\templates\connection.html" />
+    <Content Include="NTCC_Web_Project\static\scripts\app.js" />
+    <Content Include="run_client2.bat" />
     <Content Include="requirements.txt" />
     <Content Include="NTCC_Web_Project\static\content\bootstrap.css" />
     <Content Include="NTCC_Web_Project\static\content\bootstrap.min.css" />
@@ -66,10 +67,7 @@
     <Content Include="NTCC_Web_Project\static\scripts\respond.js" />
     <Content Include="NTCC_Web_Project\static\scripts\respond.min.js" />
     <Content Include="NTCC_Web_Project\static\scripts\_references.js" />
-    <Content Include="NTCC_Web_Project\templates\about.html" />
-    <Content Include="NTCC_Web_Project\templates\contact.html" />
     <Content Include="NTCC_Web_Project\templates\index.html" />
-    <Content Include="NTCC_Web_Project\templates\layout.html" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="Global|PythonCore|3.10" />
