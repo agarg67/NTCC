@@ -101,30 +101,32 @@ class CentralServer:
 
     def parse_message(self, data, addr):
 
-        keyLength = int.from_bytes(4, 'big')
+        #keyLength = int.from_bytes(4, 'big')
 
         # Receive the key itself
-        publicKeyBytes = b''
-        while len(publicKeyBytes) < keyLength:
-            publicKeyBytes += keyLength - len(publicKeyBytes)
+        #publicKeyBytes = b''
+        #while len(publicKeyBytes) < keyLength:
+        #    publicKeyBytes += keyLength - len(publicKeyBytes)
 
 
         # Reconstruct the public key object
-        publicKey = pickle.loads(publicKeyBytes)
+        #publicKey = pickle.loads(publicKeyBytes)
 
-        print(publicKey)
+        #print(publicKey)
 
         #addr = "68.99.192.233"
 
         print("This is the data received: {}".format(data))
         print("\nThis is the data received from: {}".format(addr))
 
-        original_message = data.decode()
-        message_identifier = original_message.split(" <")
+        #original_message = data.decode()
+        message_identifier = data.split(b" <")
 
-        if message_identifier[0] == "sendpubip":
+        print(message_identifier)
+
+        if message_identifier[0] == b"sendpubip":
             self.active_clients.append(addr)
-            message_identifier[1] = message_identifier[1].replace(">", "")
+            message_identifier[1] = message_identifier[1].replace(b">", b"")
             print(message_identifier[1])
 
             #public_key = pickle.loads(bytes(message_identifier[1]))
@@ -147,11 +149,11 @@ class CentralServer:
             print("\n" + self.public_keys[0])
 
 
-            test_message = "THIS IS A TEST".encode('latin')
-            ciphertext = rsa.encrypt(test_message, public_key)
-            print(ciphertext)
-            ciphertext = rsa.encrypt(test_message, self.rsaPublicKey)
-            print(ciphertext)
+            #test_message = "THIS IS A TEST".encode('latin')
+            #ciphertext = rsa.encrypt(test_message, public_key)
+            #print(ciphertext)
+            #ciphertext = rsa.encrypt(test_message, self.rsaPublicKey)
+            #print(ciphertext)
 
         elif message_identifier[0] == "sendquestion":
             print("Question received from Client with {}".format(addr))
