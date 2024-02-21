@@ -78,7 +78,7 @@ class CentralServer:
             self.UDPserver.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
     def rsa_keyGen(self):
-        self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(2048)
+        self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(1024)
         #print(self.rsaPublicKey)
         #print(self.rsaPrivateKey)
         if (self.rsaPublicKey and self.rsaPrivateKey) is not None:
@@ -132,21 +132,25 @@ class CentralServer:
             #public_key = pickle.loads(bytes(message_identifier[1]))
 
             self.public_keys.append(message_identifier[1])
-            print("Public Key received")
+            #print("Public Key received")
 
 
-            print(self.rsaPublicKey)
+            #print(self.rsaPublicKey)
 
             publicKeyBytes = pickle.dumps(self.rsaPublicKey)
-            self.UDPserver.sendto(len(publicKeyBytes).to_bytes(4, 'big') + publicKeyBytes, addr)
+            message = b"ackcon" + b" <" + publicKeyBytes + b"> <" + (str(self.active_clients[0][0])).encode() + b">"
+
+            print(message)
+
+            self.UDPserver.sendto(message, addr)
 
 
             #message = "ackcon" + " <" + str(self.rsaPublicKey) + "> "
             #self.UDPserver.sendto(message.encode(), addr)
 
-            print("#######################################")
-            print(self.rsaPublicKey)
-            print("\n" + self.public_keys[0])
+            #print("#######################################")
+            #print(self.rsaPublicKey)
+            #print("\n" + self.public_keys[0])
 
 
             #test_message = "THIS IS A TEST".encode('latin')
