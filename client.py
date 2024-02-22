@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="192.168.36.140"
+    centralServerIp="localhost"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -123,7 +123,7 @@ class Client:
         
         if(b"ackcon" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
-            tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1]-1)])
+            tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1])-1])
             
         # for i in range(len(tempArr)):
         #     tempArr[i]=tempArr[i].strip()
@@ -244,13 +244,12 @@ class Client:
                     
                     self.publickeyserver=parsedDataArr[1]
                     
-                    messagetoenc="hello"
+                    messagetoenc=b"hello"
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
                     print("test encryption:")
                     print(encmessage)
                     
-                    self.publickeyserver=rsa.PublicKey.load_pkcs1(self.publickeyserver)
-                    print(self.publickeyserver)
+                    
                     
                     print("please enter your question:")
                     while(self.inputData==""):
@@ -320,6 +319,7 @@ class Client:
                     print("Your answer has been rejected, please try from begining. Current session is terminated")
                     
                     #space here to code for more things
+                localCentralData=""
                     
                           
 
