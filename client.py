@@ -94,6 +94,8 @@ class Client:
         self.threadRelay.daemon=True
         self.threadRelay.start()
         
+    def terminal_printer(self, *dataToPrint):
+        print(dataToPrint)
         
     def asynchrounous_input(self):
         
@@ -113,13 +115,13 @@ class Client:
             
     def parseIncomingMessage(self, messageToParse):
         finalArr=[]
-        print("message to parse:\n", messageToParse)
+        self.terminal_printer("message to parse:\n", messageToParse)
         if(b"<" not in messageToParse):
             finalArr.append(messageToParse)
             return finalArr
         
         tempArr=messageToParse.split(b"<")
-        print(tempArr)
+        self.terminal_printer(tempArr)
         
         if(b"ackcon" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
@@ -128,7 +130,7 @@ class Client:
         # for i in range(len(tempArr)):
         #     tempArr[i]=tempArr[i].strip()
         
-        print(tempArr) 
+        self.terminal_printer(tempArr) 
         # for i in range(1,len(tempArr)):
         #     tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
         
@@ -143,7 +145,7 @@ class Client:
         messagPubkey= pickle.dumps(self.publicKeySelf)
         message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
-        print(message)
+        self.terminal_printer(message)
         self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
         #for testing
         #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
@@ -152,7 +154,7 @@ class Client:
     def sendQuestionToServer(self, question, answer):
         message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
         
-        print(message.encode())
+        self.terminal_printer(message.encode())
         encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
@@ -179,7 +181,7 @@ class Client:
         while(True):
             
             if(self.inputData!="" and "CMD#?" in self.inputData):
-                print(self.inputData)
+                self.terminal_printer(self.inputData)
                 localInputData=self.inputData
                 self.inputData=""
 
@@ -192,7 +194,7 @@ class Client:
 
 
             elif(self.inputData!=""):
-                print(self.inputData)
+                self.terminal_printer(self.inputData)
                 localInputData=self.inputData
                 self.inputData=""
                 
@@ -222,7 +224,7 @@ class Client:
                     
                 
             if(self.relayData!=""):
-                print(self.relayData)
+                self.terminal_printer(self.relayData)
                 localRelayData=self.relayData[0]
                 localRelayAddr=self.relayData[1]
                 self.relayData=""
@@ -232,33 +234,33 @@ class Client:
                     self.UDPClientRelaySocket.sendto(message.encode(), localRelayAddr)
                 
             if(self.centralData!=""):
-                print(self.centralData)
+                self.terminal_printer(self.centralData)
                 localCentralData=self.centralData[0]
                 localaddr=self.centralData[1]
                 self.centralData=""
                 
                 if(b"ackcon" in localCentralData):
-                    print("public key sent to server")
+                    self.terminal_printer("public key sent to server")
                     parsedDataArr=self.parseIncomingMessage(localCentralData)
-                    print(parsedDataArr)
+                    self.terminal_printer(parsedDataArr)
                     
                     self.publickeyserver=parsedDataArr[1]
                     
                     messagetoenc=b"hello"
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
-                    print("test encryption:")
-                    print(encmessage)
+                    self.terminal_printer("test encryption:")
+                    self.terminal_printer(encmessage)
                     
                     
                     
-                    print("please enter your question:")
+                    self.terminal_printer("please enter your question:")
                     while(self.inputData==""):
                         time.sleep(0.0001)
                     
                     question=self.inputData
                     self.inputData=""
                     
-                    print("Please enter your answer:")
+                    self.terminal_printer("Please enter your answer:")
                     
                     while(self.inputData==""):
                         time.sleep(0.0001)
@@ -275,7 +277,7 @@ class Client:
                     
                     questionAnswer=""
                     parsedMessage= self.parseIncomingMessage(localCentralData.decode())
-                    print(parsedMessage[2])
+                    self.terminal_printer(parsedMessage[2])
                     
                     while(self.inputData==""):
                         time.sleep(0.0001)
@@ -290,9 +292,9 @@ class Client:
                     
                     parsedMessage = self.parseIncomingMessage(localCentralData)
                     
-                    print("Recieved the following answer:")
-                    print(parsedMessage[2])
-                    print("reply yes to accept, reply with anything else to reject")
+                    self.terminal_printer("Recieved the following answer:")
+                    self.terminal_printer(parsedMessage[2])
+                    self.terminal_printer("reply yes to accept, reply with anything else to reject")
                     
                     questionAnswer=""
                     while(self.inputData==""):
@@ -311,12 +313,12 @@ class Client:
                     self.UDPClientCentralSocket.sendto(replytoSend.encode(),(self.centralServerIp, self.centralServerPort))
                     
                 if(b"ackanswer" in localCentralData):
-                    print("Your Answer has been accepted, we will move forward with completing the connection!")
+                    self.terminal_printer("Your Answer has been accepted, we will move forward with completing the connection!")
                     
                     #space here to code for getting ip map and public key
                 
                 if(b"nakanswer" in localCentralData):
-                    print("Your answer has been rejected, please try from begining. Current session is terminated")
+                    self.terminal_printer("Your answer has been rejected, please try from begining. Current session is terminated")
                     
                     #space here to code for more things
                 localCentralData=""
@@ -327,7 +329,7 @@ def get_local_ip(): # this method is used to resolve your own ip address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         # doesn't even have to be reachable
-        s.connect(('192.255.255.255', 1))
+        s.connect(('192.255.255.254', 1))
         IP = s.getsockname()[0]
     except:
         IP = '127.0.0.1'
