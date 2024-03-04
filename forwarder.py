@@ -41,12 +41,10 @@ class Relay:
             self.receive_message(data, addr)
 
     def receive_message(self, message, addr):
-        try:
-            mainMsg = message.decode()
-            print(message.decode())
-            self.UDPserver.sendto(mainMsg.encode(),("localhost", 20001))
-        except:
-            pass
+        mainMsg = message
+        print(addr)
+        self.UDPserver.sendto(message,("192.168.0.128", 1410))
+
 
     def relay(self):
             print(self.mainMsg)
@@ -57,9 +55,23 @@ class Relay:
     def run_program(self):
         while True:
             data, address = self.UDPserver.recvfrom(self.bufferSize)
-            self.receive_message(data, address)
+            #self.receive_message(data, address)
+
+def get_local_ip(): # this method is used to resolve your own ip address
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('192.255.255.254', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP    
 
 def main():
+    ip = get_local_ip()
+    print(ip)
     relay = Relay()
     relay.run_program()
 

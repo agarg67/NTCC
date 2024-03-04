@@ -7,102 +7,77 @@ import random
 import threading
 import time
 
-class IP_mapper:
-    ip_address1=""
-    ip_address2=""
-    port1=0
-    port2=0
-    
-    def __init__(self, ip1, ip2, p1, p2):
-        self.ip_address1=ip1
-        self.ip_address2=ip2
-        self.port1=p1
-        self.port2=p2
-
-localPort = 8080
-
-NoiseGeneratorServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
-
-
-class NoiseGenerator:
-    HOST = ""
-    PORT = 0
-
+class Relay:
+    server=""
+    serverport= 1410
     bufferSize = 4096
-
-    def _getIP_address(self):
-        ip_address = ''
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            s.connect(("8.8.8.8", 80))
-            ip_address = s.getsockname()[0]
-        except socket.timeout as e:
-            print("The Socket has timed out: {}".format(e))
-        except socket.gaierror as e:
-            print("The Socket has encountered an error trying to fetch IP information: {}".format(e))
-        except socket.error as e:
-            print("Socket Input and Output error: {}".format(e))
-        finally:
-            s.close()
-            return ip_address
+    mainMsg = ""
+    ipList = []
+    portList = []
+    
 
     def __init__(self):
-        self.HOST = self._getIP_address()
-        self.PORT = localPort
-        NoiseGeneratorServer.bind(('', localPort))
-        NoiseGeneratorServer.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        NoiseGeneratorServer.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.recieve = None
+        self.send = None
+        self.createSocket()
 
-    def dynamicallyIPForwading(data, addr):
-        ## This function will be used to dynamically forward the data to the next server and eventually the client. ##
-        try:
-            if data.decode() == "ackreceiveipmapper":
-                ipaddress = map()
-                pickled_message = pickle.dumps(ipaddress)
-        except Exception as e:
-            print("Failed in Dynamically IP Forwarding: {}".format(e))
-        finally:
-            NoiseGeneratorServer.sendto(pickled_message, addr)
+    def createSocket(self):
 
-    ## Will clone the received message, regardless from client or not ##
-    def cloneClientMessage(self):
-        ## Will need a priority or queue system to determine which message to clone first, otherwise we risk just
-        # cloning same message over and over again ##
-        pass
+        self.UDPserver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
+        self.UDPserver.bind(('', self.serverport))
 
-    def startNoiseGeneration(self):
+        self.recieve = threading.Thread(target=self.getUDPserver_input)
+        self.recieve.daemon = True
+        self.recieve.start()
+
+
+    def getUDPserver_input(self):
         while True:
-            data, addr = NoiseGeneratorServer.recvfrom(self.bufferSize)
-            if not data:
-                break
-            self.dynamicallyIPForwading(data, addr)
-            NoiseGeneratorServer.sendto(data, addr)
-            print(data)  # For testing purposes
-            print(addr)
+            data, addr = self.UDPserver.recvfrom(self.bufferSize)
+            self.receive_message(data, addr)
 
-    # The server can't utilize listen function as that requires a TCP socket, which inevitably leaks the ip_address of
-    # the client. #
+    def send(self):
+        print("work")
 
-    # def startPortForward(localPort, remoteHost, remotePort):
-    #    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #    server.bind(('localHost', localPort))
-    #    server.listen(1)
-    #    print("forwarding from localHost {localPort} to {remoteHost}: {remotePort}")
+    def receive_message(self, message, addr):
+        mainMsg = message
+        print("hey")
 
-    #        while True:
-    #            localSocket, localAddr = server.accept()
+        self.UDPserver.sendto(message,("192.168.0.128", 20001))
 
-    #            print("accepted connection")
 
-    #            remoteSocket = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
-    #            remoteSocket.connect(('localhost', remotePort))
-    #
-    #            forwardRemote = threading.Thread(target = forwarder, args = (localSocket, remoteSocket))
-    #            forwardlocal = threading.Thread(target = forwarder, args = (remoteSocket, localSocket))
+    def randIP(self):
+        for i in range (0, 20):
+            port = random.randrange(1000, 30000)
+            #print(ip)
+            self.portList.append(port)
+            print(self.portList[i])
 
-    #            forwardRemote.start()
-    #            forwardlocal.start()
 
-    if __name__ == "__main__":
-        __init__()
-        startNoiseGeneration()
+    def run_program(self):
+        self.randIP()
+        #self.ipList.append("192.168.0.128")
+        while True:
+            data, address = self.UDPserver.recvfrom(self.bufferSize)
+
+def get_local_ip(): # this method is used to resolve your own ip address
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('192.255.255.254', 1))
+        IP = s.getsockname()[0]
+    except:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP    
+
+def main():
+    ip = get_local_ip()
+    print(ip)
+    relay = Relay()
+    relay.run_program()
+
+if __name__ == "__main__":
+    print(os.name)
+    main()
