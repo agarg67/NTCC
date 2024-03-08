@@ -25,8 +25,7 @@ class UDPserver_Socket_Manager:
         return self.UDPserver
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.UDPserver:
-            self.UDPserver.close()
+        pass
 
 
 class CentralServer:
@@ -44,7 +43,7 @@ class CentralServer:
         # Instantiating Socket and IP address of the Server
         try:
             with UDPserver_Socket_Manager() as socketobj:
-                self.UDPserver = socketobj
+                self.UDPserver = socketobj.__enter__()
         except socket.error as e:
             print(f"Error with the server socket: {e}")
         except (AttributeError, TypeError, OSError) as e:
@@ -72,15 +71,12 @@ class CentralServer:
         return ip_address
 
     def createSocket(self):
-
         self.threadUDPserver = threading.Thread(target=self.getUDPserver_input)
         self.threadUDPserver.daemon = True
         self.threadUDPserver.start()
 
     def rsa_keyGen(self):
         self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(1024)
-        # print(self.rsaPublicKey)
-        # print(self.rsaPrivateKey)
         if (self.rsaPublicKey and self.rsaPrivateKey) is not None:
             return True
         return False
@@ -115,19 +111,19 @@ class CentralServer:
         print(message_identifier)
 
         if message_identifier[0] == b"sendpubip":
-            self.active_clients.append(addr)
+            #self.active_clients.append(addr)
             message_identifier[1] = message_identifier[1].replace(b">", b"")
             print(message_identifier[1])
 
             # public_key = pickle.loads(bytes(message_identifier[1]))
 
-            self.public_keys.append(message_identifier[1])
+            #self.public_keys.append(message_identifier[1])
             # print("Public Key received")
 
             # print(self.rsaPublicKey)
 
             publicKeyBytes = pickle.dumps(self.rsaPublicKey)
-            message = b"ackcon" + b" <" + publicKeyBytes + b"> <" + (str(self.active_clients[0][0])).encode() + b">"
+            message = b"ackcon" + b" <" + publicKeyBytes + b">"
 
             print(message)
 
@@ -211,7 +207,7 @@ class CentralServer:
 
     def server_startup(self):
 
-        self.countdown_timer_server_refresh(10)
+        self.countdown_timer_server_refresh(5000)
         self.rsa_keyGen()
         numFailures = 0
 
@@ -220,7 +216,9 @@ class CentralServer:
             # self.inputData = ""
 
             # self.threadUDPserver.start()
-            # data, address = self.UDPserver.recvfrom(self.bufferSize)
+            data, address = self.UDPserver.recvfrom(self.bufferSize)
+
+            self.parse_message(data, address)
 
             if self.rsa_keyGen():
                 numFailures = 0
@@ -231,8 +229,8 @@ class CentralServer:
                 if numFailures == 10:
                     print("\nCentral Server is unable to generate RSA keys, aborting all operations.")
                     exit(42)
-            start = time.perf_counter()
-            print("Socket has been open for {} seconds".format(time.perf_counter() - start))
+            #start = time.perf_counter()
+            #print("Socket has been open for {} seconds".format(time.perf_counter() - start))
             # self.UDPserver.timeout(2)
 
     #################################### HELPER FUNCTIONS FOR SERVER ###########################################
