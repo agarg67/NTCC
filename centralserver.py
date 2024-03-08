@@ -25,8 +25,9 @@ class UDPserver_Socket_Manager:
         return self.UDPserver
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.UDPserver:
-            self.UDPserver.close()
+        pass
+        # if self.UDPserver:
+        #     self.UDPserver.close()
 
 
 class CentralServer:
