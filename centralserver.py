@@ -232,7 +232,7 @@ class CentralServer:
                     print("\nCentral Server is unable to generate RSA keys, aborting all operations.")
                     exit(42)
             start = time.perf_counter()
-            print("Socket has been open for {} seconds".format(time.perf_counter() - start))
+            #print("Socket has been open for {} seconds".format(time.perf_counter() - start))
             # self.UDPserver.timeout(2)
 
     #################################### HELPER FUNCTIONS FOR SERVER ###########################################
