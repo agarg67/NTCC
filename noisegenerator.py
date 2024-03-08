@@ -42,21 +42,20 @@ class Relay:
     def receive_message(self, message, addr):
         mainMsg = message
         print("hey")
-        for i in range(len(self.portList)):
+        for i in range(len(self.ipList)):
             try:
-                self.UDPserver.sendto(message,("192.168.0.128", self.portList[i]))
-            except ConnectionResetError:
+                self.UDPserver.sendto(message,(self.ipList[i], 20001))
+            except OSError:
                 pass
 
 
     def randIP(self):
         for i in range (0, 20):
-            port = random.randrange(1000, 30000)
-            #print(ip)
-            self.portList.append(port)
-            print(self.portList[i])
+            ip = '{}.{}.{}.{}'.format(*__import__('random').sample(range(0,255),4))
+            self.ipList.append(ip)
+            print(self.ipList[i])
 
-        self.portList.append(20001)
+        self.ipList.append("192.168.0.128")
 
 
     def run_program(self):
@@ -65,7 +64,7 @@ class Relay:
         while True:
             try:
                 data, address = self.UDPserver.recvfrom(self.bufferSize)
-            except ConnectionResetError:
+            except OSError:
                 pass
 
 def get_local_ip(): # this method is used to resolve your own ip address

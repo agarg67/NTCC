@@ -24,10 +24,10 @@ class Relay:
 
     def createSocket(self):
 
-        self.UDPserver = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
-        self.UDPserver.bind(('', self.serverport))
+        self.client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
+        self.client.bind(('', self.serverport))
 
-        self.recieve = threading.Thread(target=self.getUDPserver_input)
+        self.recieve = threading.Thread(target=self.getClient_input)
         self.recieve.daemon = True
         self.recieve.start()
 
@@ -35,15 +35,15 @@ class Relay:
         self.send.daemon = True
         #self.send.start()
 
-    def getUDPserver_input(self):
+    def getClient_input(self):
         while True:
-            data, addr = self.UDPserver.recvfrom(self.bufferSize)
+            data, addr = self.client.recvfrom(self.bufferSize)
             self.receive_message(data, addr)
 
     def receive_message(self, message, addr):
         mainMsg = message
         print(addr)
-        self.UDPserver.sendto(message,("192.168.0.128", 1410))
+        self.client.sendto(message,("192.168.0.128", 1410))
 
 
     def relay(self):
@@ -51,10 +51,16 @@ class Relay:
             self.UDPserver.sendto("hey".encode(),("localhost", 20001))
             self.UDPserver.sendto(self.mainMsg.encode(),("localhost", 20001)) #subject to change
 
+    def centralStartup(self):
+        message = "forwarder"
+        tosend = pickle.dumps(message)
+        self.client.sendto(tosend, ("192.168.0.128", 20001))
+
 
     def run_program(self):
+        self.centralStartup()
         while True:
-            data, address = self.UDPserver.recvfrom(self.bufferSize)
+            data, address = self.client.recvfrom(self.bufferSize)
             #self.receive_message(data, address)
 
 def get_local_ip(): # this method is used to resolve your own ip address
