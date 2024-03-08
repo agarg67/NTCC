@@ -211,7 +211,7 @@ class CentralServer:
 
     def server_startup(self):
 
-        self.countdown_timer_server_refresh(10)
+        self.countdown_timer_server_refresh(100000)
         self.rsa_keyGen()
         numFailures = 0
 

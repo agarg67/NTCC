@@ -347,7 +347,7 @@ def main(): # entry function of the program
     
     randPort2=random.randrange(1500, 50000, 1)
     
-    while(randPort2==randPort):
+    while(randPort2==randPort or (randPort==20001 or randPort2==20001)):
         randPort2=random.randrange(1500, 50000, 1)
     
     print("central port:",randPort)
