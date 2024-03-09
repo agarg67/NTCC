@@ -7,6 +7,7 @@ import pickle
 import random
 import threading
 import time
+import rsa
 
 
 class Relay:
@@ -14,12 +15,14 @@ class Relay:
     serverport=9999
     bufferSize = 4096
     mainMsg = ""
-    client = []
-    
+    ipList = []
+    publickey = None
+    private = None
 
     def __init__(self):
         self.recieve = None
         self.send = None
+        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
         self.createSocket()
 
     def createSocket(self):
@@ -27,41 +30,67 @@ class Relay:
         self.client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
         self.client.bind(('', self.serverport))
 
-        self.recieve = threading.Thread(target=self.getClient_input)
+        """self.recieve = threading.Thread(target=self.getClient_input)
         self.recieve.daemon = True
-        self.recieve.start()
+        self.recieve.start()"""
 
-        self.send = threading.Thread(target=self.relay)
-        self.send.daemon = True
-        #self.send.start()
+    def parse_message(self, data, addr):
+        
+        print("This is the data received: {}".format(data))
+        print("\nThis is the data received from: {}".format(addr))
 
-    def getClient_input(self):
+
+        message_identifier = data.split(b" <")
+
+        print(message_identifier)
+
+        if message_identifier[0] == b"ackreceiveipmapper":
+            message_identifier[1] = message_identifier[1].replace(b">", b"")
+            print(message_identifier[1])
+            print(message)
+        else:
+            print("Message not recognized")
+            return None    
+
+    def centralStartup(self):
+        message = "forwarder"
+        tosend = pickle.dumps(message)
+        send = b"centralconnect" + b" <" + tosend + b">"
+        try:
+            self.client.sendto(tosend, ("192.168.0.128", 20001))
+        except ConnectionResetError:
+           print("centralserver is offline") 
+
+    #Ip Map
+    ################################################################################################################################
+    def ipMap(self, ips):
+        ipList.append("")
+
+
+    #Forward Client Messages
+    ################################################################################################################################
+
+    """def getClient_input(self):
         while True:
             data, addr = self.client.recvfrom(self.bufferSize)
-            self.receive_message(data, addr)
+            self.receive_message(data, addr)"""
+
 
     def receive_message(self, message, addr):
         mainMsg = message
         print(addr)
         self.client.sendto(message,("192.168.0.128", 1410))
 
-
-    def relay(self):
-            print(self.mainMsg)
-            self.UDPserver.sendto("hey".encode(),("localhost", 20001))
-            self.UDPserver.sendto(self.mainMsg.encode(),("localhost", 20001)) #subject to change
-
-    def centralStartup(self):
-        message = "forwarder"
-        tosend = pickle.dumps(message)
-        self.client.sendto(tosend, ("192.168.0.128", 20001))
-
-
     def run_program(self):
         self.centralStartup()
         while True:
-            data, address = self.client.recvfrom(self.bufferSize)
-            #self.receive_message(data, address)
+            try:
+                data, address = self.client.recvfrom(self.bufferSize)
+                self.parse_message(data, address)
+            except ConnectionResetError:
+                print("no connections available")
+
+##########################################################################################################################
 
 def get_local_ip(): # this method is used to resolve your own ip address
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

@@ -36,6 +36,7 @@ Client (sending messages):
 
 Forwarder:
 ````
+- centralconnect: shows central server the forwarder exists
 - ackreceiveipmapper: receive ip addresses from the central server
 - sendipmapper: send ip addresses of other servers to the noise generator
 - ackclientmessage: receive new message from client
