@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="192.168.4.24"
+    centralServerIp="10.182.149.63"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -150,7 +150,8 @@ class Client:
                 
             ipPortlist=tempArr[breakIndex]
             ipPortlist=ipPortlist[7:len(ipPortlist)-1].decode().strip()
-            loadedKey=pickle.loads(tempVar[1][0:len(tempVar[1])-1])
+            tempVar=tempVar[1][0:len(tempVar[1])-1].decode()
+            loadedKey=rsa.PublicKey.load_pkcs1(tempVar)
             tempArr=[cmd, loadedKey, ipPortlist]
             
             
