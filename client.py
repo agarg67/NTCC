@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="192.168.4.24"
+    centralServerIp="10.182.149.63"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -27,7 +27,7 @@ class Client:
     relayServerIpList=[]
     relayServerPortList=[]
     
-    relayServerIpporttupleList=[]
+    relayServerIpporttupleList=[[]]
     
     inputData=""
     
@@ -150,7 +150,8 @@ class Client:
                 
             ipPortlist=tempArr[breakIndex]
             ipPortlist=ipPortlist[7:len(ipPortlist)-1].decode().strip()
-            loadedKey=pickle.loads(tempVar[1][0:len(tempVar[1])-1])
+            tempVar=tempVar[1][0:len(tempVar[1])-1].decode()
+            loadedKey=rsa.PublicKey.load_pkcs1(tempVar)
             tempArr=[cmd, loadedKey, ipPortlist]
             
             
@@ -229,6 +230,9 @@ class Client:
                 
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
+                if(localInputData=="disconnectServer"):
+                    message="receivedis"
+                    self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
                     
                 # elif(localInputData=="sendquestion"):
                 #     print("send question:")
@@ -359,6 +363,24 @@ class Client:
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     self.publickeyPeer=parsedMessage[1]
                     ipportListstring=parsedMessage[2]
+                    ipportListstringsplit=ipportListstring.split(" ")
+                    
+                    tempVarArr=[]
+                    for i in range(len(ipportListstringsplit)):
+                        tempVar=ipportListstringsplit.at(i)
+                        tempVar=tempVar[1:len(tempVar)-1]
+                        tempVar=tempVar.split(",")
+                        tempVarArr.append(tempVar)
+                    
+                    
+                    self.relayServerIpporttupleList=tempVarArr
+                    
+                    for j in self.relayServerIpporttupleList:
+                        self.relayServerIpList.append(j[0])
+                        self.relayServerPortList.append(j[1])
+                    
+                    print("stored ip-port list")
+                        
                     
                     
                 localCentralData=""
