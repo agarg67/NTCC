@@ -16,13 +16,13 @@ class Relay:
     bufferSize = 4096
     mainMsg = ""
     ipList = []
-    publickey = None
-    private = None
+
+    centralKey = None
 
     def __init__(self):
         self.recieve = None
         self.send = None
-        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
+        self.publicKey, self.private = rsa.newkeys(1024)
         self.createSocket()
 
     def createSocket(self):
@@ -30,33 +30,47 @@ class Relay:
         self.client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
         self.client.bind(('', self.serverport))
 
-        """self.recieve = threading.Thread(target=self.getClient_input)
-        self.recieve.daemon = True
-        self.recieve.start()"""
+    def message_identifier(self, data):
+        message_identifier = data.split(b" <")
+        return message_identifier[0]
+
+    def main_message(self, data):
+        main_message = data.split(b" <")
+        main_message[1] = main_message[1].replace(b">", b"")
+        return main_message[1]
+
+    def message_sender(self, data):
+        message_sender = data.split(b" <")
+        message_sender[2] = message_sender[2].replace(b">", b"")
+        return message_sender[2]
 
     def parse_message(self, data, addr):
         
+        serverIP = self.get_local_ip().encode()
+        pubkey = self.publicKey.save_pkcs1()
+        source = addr[0].encode()
+
         print("This is the data received: {}".format(data))
         print("\nThis is the data received from: {}".format(addr))
-
         
-        message_identifier = data.split(b" <")
+        if(b"ackforwarder" in data):
+            identifier_flag = self.message_identifier(data)
+            message_content = self.main_message(data)
+            message_sender = self.message_sender(data)
 
-        print(message_identifier)
-
-        if message_identifier[0] == b"ackExistence":
-            message_identifier[1] = message_identifier[1].replace(b">", b"")
-            message = pickle.loads(message_identifier[1])
-            #print(message_identifier[1])
+        if identifier_flag == b"ackforwarder":
+            self.centralKey = rsa.PublicKey.load_pkcs1(message_content.decode())
+            message = b"hey" + b" <" + rsa.encrypt(b"hey", self.centralKey) + b">"+ b" <" + serverIP + b">"
+            self.client.sendto(message, ("192.168.0.128", 20001))
             print(message)
         else:
             print("Message not recognized")
             return None    
 
     def centralStartup(self):
-        message = "forwarder"
-        tosend = pickle.dumps(self.publickey)
-        send = b"forwarder" + b" <" + tosend + b">"+ b" <" + str(self.get_local_ip()).encode() + b">"
+        serverIP = self.get_local_ip().encode()
+        pubkey = self.publicKey.save_pkcs1()
+        send = b"forwarder" + b" <" + pubkey + b">"+ b" <" + serverIP + b">"
         try:
             self.client.sendto(send, ("192.168.0.128", 20001))
             print(send)
