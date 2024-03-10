@@ -9,6 +9,9 @@ import threading
 import time
 import rsa
 
+import json
+
+
 
 class Relay:
     server=""
@@ -52,7 +55,9 @@ class Relay:
 
         print("This is the data received: {}".format(data))
         print("\nThis is the data received from: {}".format(addr))
-        
+
+        identifier_flag = None
+
         if(b"ackforwarder" in data):
             identifier_flag = self.message_identifier(data)
             message_content = self.main_message(data)
@@ -60,19 +65,49 @@ class Relay:
 
         if identifier_flag == b"ackforwarder":
             self.centralKey = rsa.PublicKey.load_pkcs1(message_content.decode())
-            message = b"hey" + b" <" + rsa.encrypt(b"hey", self.centralKey) + b">"+ b" <" + serverIP + b">"
-            self.client.sendto(message, ("192.168.0.128", 20001))
+
+            message = b"sendipmapper <Central_Server598135_4123.512356> <" + serverIP + b">"
+
             print(message)
+
+            encrypted_message = rsa.encrypt(message, self.centralKey)
+            print(encrypted_message)
+
+            self.client.sendto(encrypted_message, addr)
         else:
-            print("Message not recognized")
-            return None    
+            # possibly encrypted message which needs to be decrypted
+            ciphertext = data
+            decrypted_messsage = rsa.decrypt(ciphertext, self.private)
+
+            identifier_flag = self.message_identifier(decrypted_messsage)
+            message_content = self.main_message(decrypted_messsage)
+            message_sender = self.message_sender(decrypted_messsage)
+
+            if identifier_flag == b"ackipmapper":
+                print("This is the message content: {}".format(message_content))
+                print("This is the message sender: {}".format(message_sender))
+
+                temp = json.loads(message_content.decode())
+                print(temp)
+
+
+
+
+
+
+            #message = b"hey" + b" <" + rsa.encrypt(b"hey", self.centralKey) + b">"+ b" <" + serverIP + b">"
+            #self.client.sendto(message, ("192.168.0.128", 20001))
+            #print(message)
+        #else:
+        #    print("Message not recognized")
+        #    return None
 
     def centralStartup(self):
         serverIP = self.get_local_ip().encode()
         pubkey = self.publicKey.save_pkcs1()
         send = b"forwarder" + b" <" + pubkey + b">"+ b" <" + serverIP + b">"
         try:
-            self.client.sendto(send, ("192.168.0.128", 20001))
+            self.client.sendto(send, ("192.168.4.24", 20001))
             print(send)
         except ConnectionResetError:
            print("centralserver is offline") 
@@ -80,6 +115,7 @@ class Relay:
     #Ip Map
     ################################################################################################################################
     def ipMap(self, ips):
+        ipList = []
         ipList.append("")
 
 

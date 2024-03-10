@@ -9,6 +9,7 @@ import rsa
 import signal
 
 import json
+import base64
 
 
 class UDPServerSocketManager:
@@ -169,7 +170,45 @@ class CentralServer:
 
         else:
 
-            if source_ip in self.active_clients_and_keys:
+            if source_ip == self.forwarderIP:
+
+                ip_map = ipMapper_manager()
+
+                if not self.forwarderPublicKey:
+                    print("Forwarder has not sent their public key")
+                else:
+                    ciphertext = data
+                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
+
+                    identifier_flag = self.message_identifier(decrypted_message)
+                    message_content = self.main_message(decrypted_message)
+                    message_sender = self.message_sender(decrypted_message)
+
+                    if identifier_flag == b"sendipmapper":
+
+                        key_phrase = b"Central_Server598135_4123.512356"
+
+                        if (message_content == key_phrase) and (source_ip == message_sender):
+
+                            server_ips = ["123.412.321", "123.123.123", "123.123.123"]
+
+
+
+                            temp = json.dumps(server_ips).encode('utf-8')
+                            print(temp)
+
+                            message = (b"ackipmapper <" + temp + b"> <" + server_ip + b">")
+                            print(message)
+
+                            encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
+                            print(encrypted_message)
+
+                            self.UDPserver.sendto(encrypted_message, addr)
+                        else:
+                            print("Forwarder has sent an incorrect key phrase or IP address")
+
+
+            elif source_ip in self.active_clients_and_keys:
 
                 if not self.active_clients_and_keys[addr[0].encode()]:
                     print("Client {} has not sent their public key".format(addr))
@@ -203,31 +242,6 @@ class CentralServer:
 
                         encrypted_message = rsa.encrypt(message, self.rsaPublicKey)
 
-                        print(encrypted_message)
-
-                        self.UDPserver.sendto(encrypted_message, addr)
-
-            elif source_ip == self.forwarderIP:
-                ip_map = ipMapper_manager()
-
-                if not self.forwarderPublicKey:
-                    print("Forwarder has not sent their public key")
-                else:
-                    ciphertext = data
-                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
-
-                    identifier_flag = self.message_identifier(decrypted_message)
-                    message_content = self.main_message(decrypted_message)
-                    message_sender = self.message_sender(decrypted_message)
-
-                    if identifier_flag == b"sendipmapper":
-                        temp = json.dumps(ip_map.server_ips)
-                        print(temp)
-
-                        message = (b"ackipmapper <" + temp.encode() + b"> <" + server_ip + b">")
-                        print(message)
-
-                        encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
                         print(encrypted_message)
 
                         self.UDPserver.sendto(encrypted_message, addr)
