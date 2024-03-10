@@ -39,14 +39,15 @@ class Relay:
         print("This is the data received: {}".format(data))
         print("\nThis is the data received from: {}".format(addr))
 
-
+        
         message_identifier = data.split(b" <")
 
         print(message_identifier)
 
-        if message_identifier[0] == b"ackreceiveipmapper":
+        if message_identifier[0] == b"ackExistence":
             message_identifier[1] = message_identifier[1].replace(b">", b"")
-            print(message_identifier[1])
+            message = pickle.loads(message_identifier[1])
+            #print(message_identifier[1])
             print(message)
         else:
             print("Message not recognized")
@@ -54,10 +55,11 @@ class Relay:
 
     def centralStartup(self):
         message = "forwarder"
-        tosend = pickle.dumps(message)
-        send = b"centralconnect" + b" <" + tosend + b">"
+        tosend = pickle.dumps(self.publickey)
+        send = b"forwarder" + b" <" + tosend + b">"+ b" <" + str(self.get_local_ip()).encode() + b">"
         try:
-            self.client.sendto(tosend, ("192.168.0.128", 20001))
+            self.client.sendto(send, ("192.168.0.128", 20001))
+            print(send)
         except ConnectionResetError:
            print("centralserver is offline") 
 
@@ -81,6 +83,18 @@ class Relay:
         print(addr)
         self.client.sendto(message,("192.168.0.128", 1410))
 
+    def get_local_ip(self): # this method is used to resolve your own ip address
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('192.255.255.254', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP  
+
     def run_program(self):
         self.centralStartup()
         while True:
@@ -90,23 +104,11 @@ class Relay:
             except ConnectionResetError:
                 print("no connections available")
 
-##########################################################################################################################
-
-def get_local_ip(): # this method is used to resolve your own ip address
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        # doesn't even have to be reachable
-        s.connect(('192.255.255.254', 1))
-        IP = s.getsockname()[0]
-    except:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    return IP    
+##########################################################################################################################  
 
 def main():
-    ip = get_local_ip()
-    print(ip)
+    #ip = get_local_ip()
+    #print(ip)
     relay = Relay()
     relay.run_program()
 

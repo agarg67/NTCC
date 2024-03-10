@@ -121,13 +121,18 @@ class CentralServer:
 
         print("This is the data received: {}".format(data))
 
-        if (b"sendpubip" or b"forwarder") in data:
+        if (b"sendpubip") in data:
+            identifier_flag = self.message_identifier(data)
+            message_content = self.main_message(data)
+            message_sender = self.message_sender(data)
+        elif (b"forwarder") in data:
             identifier_flag = self.message_identifier(data)
             message_content = self.main_message(data)
             message_sender = self.message_sender(data)
         else:
-            identifier_flag = None
+           identifier_flag = None
 
+        print(identifier_flag)
         if identifier_flag == b"sendpubip":
 
             print(message_content)
@@ -138,14 +143,14 @@ class CentralServer:
             if addr[0].encode() == message_sender:
                 if message_sender not in self.active_clients_and_keys:
                     self.active_clients_and_keys.setdefault(message_sender, client_public_key)
-                    message = (b"ackcon" + b" <" + pickle.dumps(self.rsaPublicKey) + b">" + b" <"
+                    message = (b"ackcon" + b" <" + pickle.dumps(self.rsaPublicKey, protocol=pickle.HIGHEST_PROTOCOL) + b">" + b" <"
                                + str(self.fetch_ip_address()).encode() + b">")
                     self.UDPserver.sendto(message, addr)
 
                 # Updates a client's public key if the client is already in the dictionary
                 elif message_sender in self.active_clients_and_keys:
                     self.active_clients_and_keys[message_sender] = client_public_key
-                    message = (b"ackcon" + b" <" + pickle.dumps(self.rsaPublicKey) + b">" + b" <"
+                    message = (b"ackcon" + b" <" + pickle.dumps(self.rsaPublicKey, protocol=pickle.HIGHEST_PROTOCOL) + b">" + b" <"
                                + str(self.fetch_ip_address()).encode() + b">")
                     self.UDPserver.sendto(message, addr)
             else:
@@ -160,10 +165,11 @@ class CentralServer:
             ## This won't be sent here, but it is just a temporary placeholder
             temp = pickle.dumps(map)
 
-            message_to_forwarder = (b"ackExistence" + b"<" + pickle.dumps(self.rsaPublicKey) + b"> " + b"<"
+            message_to_forwarder = (b"ackExistence" + b" <" + pickle.dumps(self.rsaPublicKey, protocol=pickle.HIGHEST_PROTOCOL) + b"> " + b"<"
                                     + str(self.fetch_ip_address()).encode() + b">")
 
             self.UDPserver.sendto(message_to_forwarder, addr)
+            print(addr)
 
 
 
@@ -355,7 +361,7 @@ class CentralServer:
         elif (addr in self.received_messages) and (message_hash not in self.received_messages[addr]):
             self.received_messages[addr].append(message_hash)
             self.parse_message(data, addr)
-        elif (addr not in self.received_messages) and (message_hash not in self.received_messages[addr]):
+        elif (addr not in self.received_messages):
             self.received_messages.setdefault(addr, [message_hash])
             self.parse_message(data, addr)
 
