@@ -230,6 +230,9 @@ class Client:
                 
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
+                if(localInputData=="disconnectServer"):
+                    message="receivedis"
+                    self.UDPClientCentralSocket(message.encode(), (self.centralServerIp, self.centralServerPort))
                     
                 # elif(localInputData=="sendquestion"):
                 #     print("send question:")
