@@ -150,7 +150,7 @@ class Client:
         
             
     def sendPublickeyIP(self):
-        messagPubkey= pickle.dumps(self.publicKeySelf)
+        messagPubkey= pickle.dumps(self.publicKeySelf, pickle.HIGHEST_PROTOCOL)
         message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
         self.terminal_printer(message)
