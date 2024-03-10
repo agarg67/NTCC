@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="192.168.0.128"
+    centralServerIp="192.168.4.24"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -131,7 +131,8 @@ class Client:
                 tempVar+=tempArr[i]
             tempArr[1]=tempVar
             print(tempArr[1][0:len(tempArr[1])-1])
-            tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1])-1])
+            tempArr[1]= (tempArr[1][0:len(tempArr[1])-1]).decode()
+                #pickle.loads(tempArr[1][0:len(tempArr[1])-1]))
             tempArr=tempArr[:2]
             print(tempArr)
         
@@ -169,8 +170,9 @@ class Client:
         
             
     def sendPublickeyIP(self):
-        messagPubkey= pickle.dumps(self.publicKeySelf, protocol=pickle.HIGHEST_PROTOCOL)
-        message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
+        #messagPubkey= pickle.dumps(self.publicKeySelf, protocol=pickle.HIGHEST_PROTOCOL)
+        pem = self.publicKeySelf.save_pkcs1()
+        message=b"sendpubip" + b" <" + pem + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
         self.terminal_printer(message)
         self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
@@ -274,6 +276,9 @@ class Client:
                     self.publickeyserver=parsedDataArr[1]
                     
                     messagetoenc=b"hello"
+
+                    self.publickeyserver = rsa.PublicKey.load_pkcs1(self.publickeyserver)
+
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
                     self.terminal_printer("test encryption:")
                     self.terminal_printer(encmessage)
