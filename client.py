@@ -120,7 +120,7 @@ class Client:
             finalArr.append(messageToParse)
             return finalArr
         
-        tempArr=messageToParse.split(b"<")
+        tempArr=messageToParse.split(b" <")
         self.terminal_printer(tempArr)
         
         if(b"ackcon" in tempArr[0]):
@@ -132,6 +132,8 @@ class Client:
             tempArr[1]=tempVar
             print(tempArr[1][0:len(tempArr[1])-1])
             tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1])-1])
+            tempArr=tempArr[:2]
+            print(tempArr)
             
         # for i in range(len(tempArr)):
         #     tempArr[i]=tempArr[i].strip()
