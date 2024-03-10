@@ -125,6 +125,12 @@ class Client:
         
         if(b"ackcon" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
+            
+            tempVar=b""
+            for i in range(1,len(tempArr)):
+                tempVar+=tempArr[i]
+            tempArr[1]=tempVar
+            print(tempArr[1][0:len(tempArr[1])-1])
             tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1])-1])
             
         # for i in range(len(tempArr)):
