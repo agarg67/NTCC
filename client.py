@@ -120,12 +120,39 @@ class Client:
             finalArr.append(messageToParse)
             return finalArr
         
-        tempArr=messageToParse.split(b"<")
+        tempArr=messageToParse.split(b" <")
         self.terminal_printer(tempArr)
         
         if(b"ackcon" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
+            
+            tempVar=b""
+            for i in range(1,len(tempArr)):
+                tempVar+=tempArr[i]
+            tempArr[1]=tempVar
+            print(tempArr[1][0:len(tempArr[1])-1])
             tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1])-1])
+            tempArr=tempArr[:2]
+            print(tempArr)
+        
+        elif(b"sendcomreq" in tempArr[0]):
+            tempArr[0]=tempArr[0].decode().strip()
+            cmd=tempArr[0]
+            
+            tempVar=b""
+            breakIndex=-1
+            for i in range(1,len(tempArr)):
+                if(b"ip_port" in tempArr[i]):
+                    breakIndex=i
+                    break
+                tempVar+=tempArr[i]
+                
+            ipPortlist=tempArr[breakIndex]
+            ipPortlist=ipPortlist[7:len(ipPortlist)-1].decode().strip()
+            loadedKey=pickle.loads(tempVar[1][0:len(tempVar[1])-1])
+            tempArr=[cmd, loadedKey, ipPortlist]
+            
+            
             
         # for i in range(len(tempArr)):
         #     tempArr[i]=tempArr[i].strip()
@@ -321,6 +348,14 @@ class Client:
                     self.terminal_printer("Your answer has been rejected, please try from begining. Current session is terminated")
                     
                     #space here to code for more things
+                    
+                if(b"sendcomreq" in localCentralData):
+                    print("got list of ip address+port")
+                    parsedMessage=self.parseIncomingMessage(localCentralData)
+                    self.publickeyPeer=parsedMessage[1]
+                    ipportListstring=parsedMessage[2]
+                    
+                    
                 localCentralData=""
                     
                           
