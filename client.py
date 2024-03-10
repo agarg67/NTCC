@@ -27,7 +27,7 @@ class Client:
     relayServerIpList=[]
     relayServerPortList=[]
     
-    relayServerIpporttupleList=[]
+    relayServerIpporttupleList=[[]]
     
     inputData=""
     
@@ -363,6 +363,24 @@ class Client:
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     self.publickeyPeer=parsedMessage[1]
                     ipportListstring=parsedMessage[2]
+                    ipportListstringsplit=ipportListstring.split(" ")
+                    
+                    tempVarArr=[]
+                    for i in range(len(ipportListstringsplit)):
+                        tempVar=ipportListstringsplit.at(i)
+                        tempVar=tempVar[1:len(tempVar)-1]
+                        tempVar=tempVar.split(",")
+                        tempVarArr.append(tempVar)
+                    
+                    
+                    self.relayServerIpporttupleList=tempVarArr
+                    
+                    for j in self.relayServerIpporttupleList:
+                        self.relayServerIpList.append(j[0])
+                        self.relayServerPortList.append(j[1])
+                    
+                    print("stored ip-port list")
+                        
                     
                     
                 localCentralData=""
