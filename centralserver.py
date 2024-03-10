@@ -2,19 +2,14 @@ import sys
 import os
 import socket
 import hashlib
-import struct
-import re
 import pickle
-import random
 import threading
 import time
-
 import rsa
-
 import signal
 
 
-class UDPserver_Socket_Manager:
+class UDPServerSocketManager:
     def __init__(self):
         self.serverPort = 20001
         self.UDPserver = None
@@ -27,6 +22,17 @@ class UDPserver_Socket_Manager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
+class ipMapper_manager:
+    def __init__(selfs):
+        # This will be a list of the IP addresses of the servers
+        server_ips = [b"123.412.321", b"123.123.123", b"123.123.123"]
+
+
+    def __enter__(self):
+        pass
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
 
 class CentralServer:
 
@@ -35,6 +41,7 @@ class CentralServer:
         self.server_uptime = time.time()
         self.localPort = 20001
         self.bufferSize = 4096
+        self.forwarderIP = None
         self.active_clients_and_keys = {}
         self.received_messages = {}
         self.questions_and_answer = {}
@@ -42,18 +49,20 @@ class CentralServer:
 
         # Instantiating Socket and IP address of the Server
         try:
-            with UDPserver_Socket_Manager() as socketobj:
-                self.UDPserver = socketobj.__enter__()
+            with UDPServerSocketManager() as socketobj:
+                self.UDPserver = socketobj
         except socket.error as e:
             print(f"Error with the server socket: {e}")
         except (AttributeError, TypeError, OSError) as e:
             print(f"Error encountered with the Socket Manager class: {type(e), e}")
         print("Central Server Initialized : {}:{}".format(self.fetch_ip_address(), self.localPort))
 
+    # Destructor that only closes the socket
     def __del__(self):
         self.UDPserver.close()
         pass
 
+    # Fetches the IP address of the server
     def fetch_ip_address(self):
         ip_address = ''
         try:
@@ -70,7 +79,8 @@ class CentralServer:
             s.close()
         return ip_address
 
-    def createSocket(self):
+    # Creates a thread for the server to listen for incoming messages
+    def createThread(self):
         self.threadUDPserver = threading.Thread(target=self.getUDPserver_input)
         self.threadUDPserver.daemon = True
         self.threadUDPserver.start()
@@ -86,7 +96,173 @@ class CentralServer:
             data, addr = self.UDPserver.recvfrom(self.bufferSize)
             self.receive_message(data, addr)
 
+    def message_identifier(self, data):
+        message_identifier = data.split(b" <")
+        return message_identifier[0]
+
+    def main_message(self, data):
+        main_message = data.split(b" <")
+        main_message[1] = main_message[1].replace(b">", b"")
+        return main_message[1]
+
+    def message_sender(self, data):
+        message_sender = data.split(b" <")
+        message_sender[2] = message_sender[2].replace(b">", b"")
+        return message_sender[2]
+
+    def additional_message_editor(self, data):
+        additional_message = data.split(b" <")
+        additional_message[3] = additional_message[3].replace(b">", b"")
+        return additional_message[3]
+
+
+    ## Apparently only the sendpubip and forwarder messages will be unecrypted, everything else will be assumed encrypted ##
     def parse_message(self, data, addr):
+
+        print("This is the data received: {}".format(data))
+
+        if (b"sendpubip") in data:
+            identifier_flag = self.message_identifier(data)
+            message_content = self.main_message(data)
+            message_sender = self.message_sender(data)
+        elif (b"forwarder") in data:
+            identifier_flag = self.message_identifier(data)
+            message_content = self.main_message(data)
+            message_sender = self.message_sender(data)
+        else:
+           identifier_flag = None
+
+        print(identifier_flag)
+        if identifier_flag == b"sendpubip":
+
+            print(message_content)
+
+            client_public_key = pickle.loads(message_content)
+
+            # Need the address to be in bytes in order to be compared with the message_sender
+            if addr[0].encode() == message_sender:
+                if message_sender not in self.active_clients_and_keys:
+                    self.active_clients_and_keys.setdefault(message_sender, client_public_key)
+                    message = (b"ackcon" + b" <" + pickle.dumps(self.rsaPublicKey, protocol=pickle.HIGHEST_PROTOCOL) + b">" + b" <"
+                               + str(self.fetch_ip_address()).encode() + b">")
+                    self.UDPserver.sendto(message, addr)
+
+                # Updates a client's public key if the client is already in the dictionary
+                elif message_sender in self.active_clients_and_keys:
+                    self.active_clients_and_keys[message_sender] = client_public_key
+                    message = (b"ackcon" + b" <" + pickle.dumps(self.rsaPublicKey, protocol=pickle.HIGHEST_PROTOCOL) + b">" + b" <"
+                               + str(self.fetch_ip_address()).encode() + b">")
+                    self.UDPserver.sendto(message, addr)
+            else:
+                print("Connection request denied from: {} due to inconsistent IP address within the message".format(addr))
+
+        elif identifier_flag == b"forwarder":
+
+            self.forwarderIP = addr[0].encode()
+
+            map = ipMapper_manager()
+
+            ## This won't be sent here, but it is just a temporary placeholder
+            temp = pickle.dumps(map)
+
+            message_to_forwarder = (b"ackExistence" + b" <" + pickle.dumps(self.rsaPublicKey, protocol=pickle.HIGHEST_PROTOCOL) + b"> " + b"<"
+                                    + str(self.fetch_ip_address()).encode() + b">")
+
+            self.UDPserver.sendto(message_to_forwarder, addr)
+            print(addr)
+
+
+
+            pass
+
+        else:
+
+            if addr[0].encode() in self.active_clients_and_keys:
+
+                if not self.active_clients_and_keys[addr[0].encode()]:
+                    print("Client {} has not sent their public key".format(addr))
+                else:
+                    ciphertext = data
+                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
+
+                    identifier_flag = self.message_identifier(decrypted_message)
+                    message_content = self.main_message(decrypted_message)
+                    message_sender = self.message_sender(decrypted_message)
+
+                    if identifier_flag == b"sendquestion":
+
+                        question = message_sender
+                        answer = self.additional_message_editor(decrypted_message)
+
+                        if not self.questions_and_answer:
+                            self.questions_and_answer.setdefault(addr[0].encode(), [question, answer])
+                        elif addr[0].encode() in self.questions_and_answer:
+
+                            if self.questions_and_answer[addr[0].encode()] != [question, answer]:
+                                self.questions_and_answer[addr[0].encode()] = [question, answer]
+                            # Probably redundant
+                            elif question or answer not in self.questions_and_answer[addr[0].encode()]:
+                                self.questions_and_answer[addr[0].encode()] = [question, answer]
+
+
+                        message = (b"ackquestion" + b" <" + message_content + b"> <"
+                                   + str(self.fetch_ip_address()).encode() + b">")
+
+                        print(message)
+
+                        encrypted_message = rsa.encrypt(message, self.rsaPublicKey)
+
+                        print(encrypted_message)
+
+                        self.UDPserver.sendto(encrypted_message, addr)
+
+
+
+
+
+
+
+            else:
+                print("Client {} is not in the active clients list".format(addr))
+
+
+        """
+        elif identifier_flag == b"sendquestion":
+
+            temp_message = []
+            temp_message = data.split(b" <")
+            temp_message[1] = temp_message[1].replace(b">", b"")
+            temp_message[2] = temp_message[2].replace(b">", b"")
+            temp_message[3] = temp_message[3].replace(b">", b"")
+
+            print(temp_message)
+
+
+            if message_sender in self.active_clients_and_keys:
+
+                if not self.active_clients_and_keys[message_sender]:
+                    print("Client {} has not sent their public key".format(message_sender))
+
+                else:
+                    ciphertext = pickle.loads(message_content)
+                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
+                    print("Decrypted message: {}".format(decrypted_message))
+
+
+            else:
+                print("Client {} is not in the active clients list".format(message_sender))
+
+
+
+
+            pass
+        elif identifier_flag == b"answerquestion":
+            pass
+        elif identifier_flag == b"comrequest":
+            pass
+        """
+
+
 
         # keyLength = int.from_bytes(4, 'big')
 
@@ -102,18 +278,19 @@ class CentralServer:
 
         # addr = "68.99.192.233"
 
-        print("This is the data received: {}".format(data))
-        print("\nThis is the data received from: {}".format(addr))
+        #print("This is the data received: {}".format(data))
+        #print("\nThis is the data received from: {}".format(addr))
 
         # original_message = data.decode()
         message_identifier = data.split(b" <")
 
-        print(message_identifier)
+        #print(message_identifier)
 
         if message_identifier[0] == b"sendpubip":
+            pass
             #self.active_clients.append(addr)
-            message_identifier[1] = message_identifier[1].replace(b">", b"")
-            print(message_identifier[1])
+            #message_identifier[1] = message_identifier[1].replace(b">", b"")
+            #print(message_identifier[1])
 
             # public_key = pickle.loads(bytes(message_identifier[1]))
 
@@ -122,12 +299,12 @@ class CentralServer:
 
             # print(self.rsaPublicKey)
 
-            publicKeyBytes = pickle.dumps(self.rsaPublicKey)
-            message = b"ackcon" + b" <" + publicKeyBytes + b">"
+            #publicKeyBytes = pickle.dumps(self.rsaPublicKey)
+            #message = b"ackcon" + b" <" + publicKeyBytes + b">"
 
-            print(message)
+            #print(message)
 
-            self.UDPserver.sendto(message, addr)
+            #self.UDPserver.sendto(message, addr)
 
             # message = "ackcon" + " <" + str(self.rsaPublicKey) + "> "
             # self.UDPserver.sendto(message.encode(), addr)
@@ -171,67 +348,41 @@ class CentralServer:
 
     #### Helper functions to store the data from the client ####
     ## Will need more information as to how to maintain the ordering of the UDP packets in order to store the data correctly ##
-    def store_public_key(self, data, addr):
-        self.public_keys.append(data)
-
-    def store_question(self, data, addr):
-        self.questions.append(data)
-
-    def store_answer(self, data, addr):
-        self.answers.append(data)
 
     def receive_message(self, data, addr):
 
         message_hash = hashlib.sha256(data).hexdigest()
 
-        '''
         if not self.received_messages:
-            self.received_messages.append([addr, message_hash])
-            print("Received Message: \n{} \nfrom {}".format(data.decode(), addr))
-        else:
-            for address, message in self.received_messages:
-                if address[0] == addr[0] and message == message_hash:
-                    print("Original message: ", message)
-                    print("Message hash: ", message_hash)
-                    print("Message already received from same IP address. Ignoring message.")
-                    return
-            print("Received Message: \n{} \nfrom {}".format(data.decode(), addr))
-            print("Message hash: ", message_hash)
-            '''
-        self.received_messages.append([addr, message_hash])
-        self.parse_message(data, addr)
+            self.received_messages = {addr: [message_hash]}
+            self.parse_message(data, addr)
+        elif (addr in self.received_messages) and (message_hash in self.received_messages[addr]):
+            print("Duplicate message received, discarding...")
+        elif (addr in self.received_messages) and (message_hash not in self.received_messages[addr]):
+            self.received_messages[addr].append(message_hash)
+            self.parse_message(data, addr)
+        elif (addr not in self.received_messages):
+            self.received_messages.setdefault(addr, [message_hash])
+            self.parse_message(data, addr)
 
+        print(self.received_messages)
+
+    # Calulates the time for the server to refresh
     def countdown_timer_server_refresh(self, seconds):
-        self.server_runtime = time.time()
-        self.server_refresh = self.server_runtime + seconds
+        return self.server_uptime + seconds
 
     def server_startup(self):
 
-        self.countdown_timer_server_refresh(5000)
-        self.rsa_keyGen()
-        numFailures = 0
+        server_refresh = self.countdown_timer_server_refresh(5000)
+        keys_generated = self.rsa_keyGen()
 
-        while time.time() < self.server_refresh:
-            # localInput = self.inputData
-            # self.inputData = ""
+        if not keys_generated:
+            print("##### Server has failed to generate RSA keys, retrying... #####")
 
-            # self.threadUDPserver.start()
+        while keys_generated and (time.time() < server_refresh):
             data, address = self.UDPserver.recvfrom(self.bufferSize)
+            self.receive_message(data, address)
 
-            self.parse_message(data, address)
-
-            if self.rsa_keyGen():
-                numFailures = 0
-                # self.receive_message(data, address)
-            else:
-                numFailures += 1
-                print("\nServer has failed to generate RSA keys, retrying...")
-                if numFailures == 10:
-                    print("\nCentral Server is unable to generate RSA keys, aborting all operations.")
-                    exit(42)
-            #start = time.perf_counter()
-            #print("Socket has been open for {} seconds".format(time.perf_counter() - start))
-            # self.UDPserver.timeout(2)
 
     #################################### HELPER FUNCTIONS FOR SERVER ###########################################
     ### A Keep alive protocol that ensures a client is still active ###

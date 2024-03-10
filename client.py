@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="localhost"
+    centralServerIp="192.168.0.128"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -169,7 +169,7 @@ class Client:
         
             
     def sendPublickeyIP(self):
-        messagPubkey= pickle.dumps(self.publicKeySelf, pickle.HIGHEST_PROTOCOL)
+        messagPubkey= pickle.dumps(self.publicKeySelf, protocol=pickle.HIGHEST_PROTOCOL)
         message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
         self.terminal_printer(message)
