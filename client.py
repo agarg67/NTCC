@@ -31,6 +31,7 @@ class Client:
     
     inputData=""
     
+    
     centralData=""
     
     relayData=""
