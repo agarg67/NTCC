@@ -125,12 +125,31 @@ class CentralServer:
 
     # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
     def split_and_encrypt(self, message, client_public_key):
-        pass
+
+        whole_encrypted_message = None
+
+        if (len(message) < 245):
+            whole_encrypted_message = rsa.encrypt(message, client_public_key)
+        else:
+            for i in range(0, len(message), 245):
+                message_chunk = message[i:i + 245]
+                whole_encrypted_message = rsa.encrypt(message_chunk, client_public_key)
+
+        return whole_encrypted_message
 
     # NEED To add a function that decrypts the message and combines the 245 byte chunks
-    def split_and_decrypt(self, message, client_public_key):
-        pass
+    def split_and_decrypt(self, message):
 
+        decrypted_message = None
+
+        if (len(message) < 245):
+            decrypted_message = rsa.decrypt(message, self.rsaPrivateKey)
+        else:
+            for i in range(0, len(message), 245):
+                message_chunk = message[i:i + 245]
+                decrypted_message += rsa.decrypt(message_chunk, self.rsaPrivateKey)
+
+        return decrypted_message
 
     ## Apparently only the sendpubip and forwarder messages will be unecrypted, everything else will be assumed encrypted ##
     def parse_message(self, data, addr):
