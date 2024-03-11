@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="192.168.19.224"
+    centralServerIp="10.155.131.118"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -31,12 +31,13 @@ class Client:
     
     inputData=""
     
+    
     centralData=""
     
     relayData=""
     
     # this is the fixed buffersixe for recieving data
-    bufferSize=128000
+    bufferSize=4096
     
     publicKeySelf=""
     privatekeySelf=""
@@ -55,7 +56,7 @@ class Client:
         self.clientRelayPort=portPass2
         
         #key=rsa.generate(1024)
-        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
+        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
         #random_generator = Random.new().read
         #self.privatekeySelf=RSA.generate(1024, random_generator)
         #self.publicKeySelf=self.privatekeySelf.publickey()
@@ -186,8 +187,7 @@ class Client:
         
         self.terminal_printer(message.encode())
         #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
-        encmessage=self.encryptDataCentral(message.encode())
-        print(encmessage)
+        encmessage=self.encrypt_data_central_server(message.encode())
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
         self.questionId+=1
@@ -202,16 +202,26 @@ class Client:
         
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
-    def encryptDataCentral(self, dataToEnc):
-        encData=b""
-        if(len(dataToEnc)>245):
-            for j in range(len(dataToEnc), 245):
-                encData+=rsa.encrypt(dataToEnc[j:j+245], self.publickeyserver)
+    def decrypt_data(self, data_to_decrypt):
+        decrypted_data=b""
+        if len(data_to_decrypt)<=256:
+            decrypted_data=rsa.decrypt(data_to_decrypt, self.privatekeySelf)
         else:
-            encData=rsa.encrypt(dataToEnc, self.publickeyserver)
+            for i in range(len(data_to_decrypt), 256):
+                decrypted_data+=rsa.decrypt(data_to_decrypt[i:1+256], self.privatekeySelf)
             
-        return encData
+        return decrypted_data
+    
+    def encrypt_data_central_server(self, data_to_encrypt):
+        encrypted_data=b""
+        if len(data_to_encrypt)<=245:
+            encrypted_data=rsa.decrypt(data_to_encrypt, self.publickeyserver)
+        else:
+            for i in range(len(data_to_encrypt), 245):
+                encrypted_data+=rsa.decrypt(data_to_encrypt[i:1+245], self.publickeyserver)
             
+        return encrypted_data
+        
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
         
         flagforServerConnection=True#will be made false
@@ -300,23 +310,8 @@ class Client:
                 localCentralData=self.centralData[0]
                 localaddr=self.centralData[1]
                 self.centralData=""
-                if(len(localCentralData)<=256):
-                    localCentralData=rsa.decrypt(localCentralData, self.privatekeySelf)
-                else:
-                    splitData=b""
-                    
-                    splitArr=[]
-                    for k in range(0,len(localCentralData), 256):
-                        splitArr.append(localCentralData[k:k+256])
-                    
-                    print("split arr::::")
-                    print(splitArr)
-                    for l in splitArr:
-                        splitData+=rsa.decrypt(l, self.privatekeySelf)
-                    print(splitData)
-                    localCentralData=splitData
                 
-                print("decrypted central server data")        
+                localCentralData=rsa.decrypt(localCentralData, self.privatekeySelf)
                 print(localCentralData)
                 
                 if(b"ackcon" in localCentralData):
