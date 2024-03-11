@@ -458,19 +458,23 @@ class Client:
                     #space here to code for more things
                     
                 if(b"sendcomreq" in localCentralData):
-                    print("got list of ip address+port")
+                    print("got ip address+port")
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     self.publickeyPeer=parsedMessage[1]
                     ipportListstring=parsedMessage[2]
-                    ipportListstringsplit=ipportListstring.split(" ")
+                    ipportListstringsplit=ipportListstring.strip()
                     
                     tempVarArr=[]
-                    for i in range(len(ipportListstringsplit)):
-                        tempVar=ipportListstringsplit.at(i)
-                        tempVar=tempVar[1:len(tempVar)-1]
-                        tempVar=tempVar.split(",")
-                        tempVarArr.append(tempVar)
+                    #for i in range(len(ipportListstringsplit)):
+                        #tempVar=ipportListstringsplit.at(i)
+                    tempVar=ipportListstringsplit
+                    tempVar=tempVar.split(",")
+                    tempVar[0]=tempVar.strip()
+                    tempVar[1]=int(tempVar[1])
+                    tempVarArr.append(tempVar)
                     
+                    self.forwarderServerIp=tempVar[0]
+                    self.forwarderServerPort=tempVar[1]
                     
                     self.relayServerIpporttupleList=tempVarArr
                     
@@ -478,7 +482,7 @@ class Client:
                         self.relayServerIpList.append(j[0])
                         self.relayServerPortList.append(j[1])
                     
-                    print("stored ip-port list")
+                    print("stored ip-port")
                         
                     
                 localCentralData=""
