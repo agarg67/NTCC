@@ -29,7 +29,8 @@ Client (sending messages):
 - messageack <message id>: implicit ack sends
 - terminatecom: terminate communication
 - terminatecomack: accept to terminate communication
-
+- sendnameserver <name>: sends the name to server according to the format
+- sendpartnerserver <name>: sends the partner name to server according to the format for communication
 * The following have been marked redundant and would need further analysis.
 ````
 

@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="10.159.86.235"
+    centralServerIp="10.155.131.118"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -37,7 +37,7 @@ class Client:
     relayData=""
     
     # this is the fixed buffersixe for recieving data
-    bufferSize=4096
+    bufferSize=128000
     
     publicKeySelf=""
     privatekeySelf=""
@@ -155,6 +155,15 @@ class Client:
             loadedKey=rsa.PublicKey.load_pkcs1(tempVar)
             tempArr=[cmd, loadedKey, ipPortlist]
             
+        elif(b"comrequest" in tempArr[0]):
+            tempArr[0]=tempArr[0].decode().strip()
+            cmd=tempArr[0]
+            tempVar=tempArr[1][0:len(tempArr[1])-1]
+            tempVar=tempVar.split(",")
+            print(tempVar)
+            
+            tempArr=[cmd, tempVar]
+            
             
             
         # for i in range(len(tempArr)):
@@ -205,21 +214,27 @@ class Client:
     def decrypt_data(self, data_to_decrypt):
         decrypted_data=b""
         if len(data_to_decrypt)<=256:
+            print("normal decrypted data")
             decrypted_data=rsa.decrypt(data_to_decrypt, self.privatekeySelf)
         else:
-            for i in range(len(data_to_decrypt), 256):
-                decrypted_data+=rsa.decrypt(data_to_decrypt[i:1+256], self.privatekeySelf)
+            for i in range(0, len(data_to_decrypt), 256):
+                chunk=data_to_decrypt[i:i+256]
+                chunk=rsa.decrypt(chunk, self.privatekeySelf)
+                print("decrypted chunk:", chunk)
+                decrypted_data+=chunk
             
         return decrypted_data
     
     def encrypt_data_central_server(self, data_to_encrypt):
         encrypted_data=b""
         if len(data_to_encrypt)<=245:
-            encrypted_data=rsa.decrypt(data_to_encrypt, self.publickeyserver)
+            encrypted_data=rsa.encrypt(data_to_encrypt, self.publickeyserver)
         else:
-            for i in range(len(data_to_encrypt), 245):
-                encrypted_data+=rsa.decrypt(data_to_encrypt[i:1+245], self.publickeyserver)
-            
+            for i in range(0,len(data_to_encrypt), 245):
+                encrypted_data+=rsa.encrypt(data_to_encrypt[i:i+245], self.publickeyserver)
+        print("encrypted data:")
+        print(encrypted_data)
+           
         return encrypted_data
         
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
@@ -227,7 +242,7 @@ class Client:
         flagforServerConnection=True#will be made false
         
         while(flagforServerConnection==False):
-            time.sleep(1)# will be changed 
+            time.sleep(0.00001)# will be changed 
         
         while(True):
             
@@ -312,6 +327,7 @@ class Client:
                 self.centralData=""
                 
                 localCentralData=self.decrypt_data(localCentralData)
+                print("decryptedData")
                 print(localCentralData)
                 
                 if(b"ackcon" in localCentralData):
@@ -331,8 +347,65 @@ class Client:
                     
                     
                 if(b"unameCS" in localCentralData):
-                    pass
-                
+                    self.terminal_printer("What's your name?")
+                    self.terminal_printer("Enter first 3 letters of your last name and first 1 letters of your last name")
+                    name=""
+                    nameFlag=False
+                    while(nameFlag==False):
+                        while(self.inputData==""):
+                            time.sleep(0.0001)
+                        name=self.inputData
+                        self.inputData=""
+                        
+                        name=name.strip()
+                        
+                        if(len(name)>4):
+                            print("incorrect format")
+                        else:
+                            nameFlag=True
+                    
+                    name=name[0:3] + "##" + name[3:]
+                    message= "sendnameserver " + "<" + name +">"
+                    enc=self.encrypt_data_central_server(message.encode())
+                    
+                    self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                    
+                if(b"comrequest" in localCentralData):
+                    self.terminal_printer("please choose the partner to communicate with (note please put name exactly as you see it)")
+                    partnerName=""
+                    parsedMessage=self.parseIncomingMessage(localCentralData)
+                    
+                    nameArray=parsedMessage[1]
+                    
+                    for i in nameArray:
+                        print(i)
+                        
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    partnerName=self.inputData
+                    self.inputData=""
+                    
+                    partnerName=partnerName.strip()
+                    print(partnerName)
+                    
+                    while(partnerName not in nameArray):
+                        print("name not present, please choose again")
+                        while(self.inputData==""):
+                            time.sleep(0.0001)
+                    
+                        partnerName=self.inputData
+                        self.inputData=""
+                    
+                        partnerName=partnerName.strip()
+                        print(partnerName)
+                        
+                    message= "sendpartnerserver " + "<" + partnerName +">"
+                    enc=self.encrypt_data_central_server(message.encode())
+                    
+                    self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                    
+                    
                 if(b"sendquestion" in localCentralData):
                     
                     questionAnswer=""
@@ -405,7 +478,6 @@ class Client:
                     
                     print("stored ip-port list")
                         
-                    
                     
                 localCentralData=""
                     
