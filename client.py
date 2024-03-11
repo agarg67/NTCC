@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="192.168.0.128"
+    centralServerIp="10.155.131.118"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -27,7 +27,7 @@ class Client:
     relayServerIpList=[]
     relayServerPortList=[]
     
-    relayServerIpporttupleList=[]
+    relayServerIpporttupleList=[[]]
     
     inputData=""
     
@@ -131,7 +131,8 @@ class Client:
                 tempVar+=tempArr[i]
             tempArr[1]=tempVar
             print(tempArr[1][0:len(tempArr[1])-1])
-            tempArr[1]=pickle.loads(tempArr[1][0:len(tempArr[1])-1])
+            tempArr[1]= (tempArr[1][0:len(tempArr[1])-1]).decode()
+                #pickle.loads(tempArr[1][0:len(tempArr[1])-1]))
             tempArr=tempArr[:2]
             print(tempArr)
         
@@ -149,7 +150,8 @@ class Client:
                 
             ipPortlist=tempArr[breakIndex]
             ipPortlist=ipPortlist[7:len(ipPortlist)-1].decode().strip()
-            loadedKey=pickle.loads(tempVar[1][0:len(tempVar[1])-1])
+            tempVar=tempVar[1][0:len(tempVar[1])-1].decode()
+            loadedKey=rsa.PublicKey.load_pkcs1(tempVar)
             tempArr=[cmd, loadedKey, ipPortlist]
             
             
@@ -169,8 +171,9 @@ class Client:
         
             
     def sendPublickeyIP(self):
-        messagPubkey= pickle.dumps(self.publicKeySelf, protocol=pickle.HIGHEST_PROTOCOL)
-        message=b"sendpubip" + b" <" + messagPubkey + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
+        #messagPubkey= pickle.dumps(self.publicKeySelf, protocol=pickle.HIGHEST_PROTOCOL)
+        pem = self.publicKeySelf.save_pkcs1()
+        message=b"sendpubip" + b" <" + pem + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
         self.terminal_printer(message)
         self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
@@ -227,6 +230,27 @@ class Client:
                 
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
+                elif(localInputData=="disconnectServer"):
+                    message="receivedis"
+                    self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
+                    
+                elif(localInputData=="sendquestion"):
+                    self.terminal_printer("please enter your question:")
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    question=self.inputData
+                    self.inputData=""
+                    
+                    self.terminal_printer("Please enter your answer:")
+                    
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                        
+                    answer=self.inputData
+                    self.inputData=""
+                    
+                    self.sendQuestionToServer(question, answer)
                     
                 # elif(localInputData=="sendquestion"):
                 #     print("send question:")
@@ -266,6 +290,9 @@ class Client:
                 localaddr=self.centralData[1]
                 self.centralData=""
                 
+                localCentralData=rsa.decrypt(localCentralData, self.privatekeySelf)
+                print(localCentralData)
+                
                 if(b"ackcon" in localCentralData):
                     self.terminal_printer("public key sent to server")
                     parsedDataArr=self.parseIncomingMessage(localCentralData)
@@ -274,31 +301,16 @@ class Client:
                     self.publickeyserver=parsedDataArr[1]
                     
                     messagetoenc=b"hello"
+
+                    self.publickeyserver = rsa.PublicKey.load_pkcs1(self.publickeyserver)
+
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
                     self.terminal_printer("test encryption:")
                     self.terminal_printer(encmessage)
                     
                     
-                    
-                    self.terminal_printer("please enter your question:")
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
-                    
-                    question=self.inputData
-                    self.inputData=""
-                    
-                    self.terminal_printer("Please enter your answer:")
-                    
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
-                        
-                    answer=self.inputData
-                    self.inputData=""
-                    
-                    self.sendQuestionToServer(question, answer)
-                    
-                    
-                    
+                if(b"unameCS" in localCentralData):
+                    pass
                 
                 if(b"sendquestion" in localCentralData):
                     
@@ -354,6 +366,24 @@ class Client:
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     self.publickeyPeer=parsedMessage[1]
                     ipportListstring=parsedMessage[2]
+                    ipportListstringsplit=ipportListstring.split(" ")
+                    
+                    tempVarArr=[]
+                    for i in range(len(ipportListstringsplit)):
+                        tempVar=ipportListstringsplit.at(i)
+                        tempVar=tempVar[1:len(tempVar)-1]
+                        tempVar=tempVar.split(",")
+                        tempVarArr.append(tempVar)
+                    
+                    
+                    self.relayServerIpporttupleList=tempVarArr
+                    
+                    for j in self.relayServerIpporttupleList:
+                        self.relayServerIpList.append(j[0])
+                        self.relayServerPortList.append(j[1])
+                    
+                    print("stored ip-port list")
+                        
                     
                     
                 localCentralData=""
