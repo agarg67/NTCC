@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="10.155.131.118"
+    centralServerIp="192.168.19.224"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -36,7 +36,7 @@ class Client:
     relayData=""
     
     # this is the fixed buffersixe for recieving data
-    bufferSize=4096
+    bufferSize=128000
     
     publicKeySelf=""
     privatekeySelf=""
@@ -55,7 +55,7 @@ class Client:
         self.clientRelayPort=portPass2
         
         #key=rsa.generate(1024)
-        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
+        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
         #random_generator = Random.new().read
         #self.privatekeySelf=RSA.generate(1024, random_generator)
         #self.publicKeySelf=self.privatekeySelf.publickey()
@@ -185,7 +185,9 @@ class Client:
         message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
         
         self.terminal_printer(message.encode())
-        encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
+        #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
+        encmessage=self.encryptDataCentral(message.encode())
+        print(encmessage)
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
         self.questionId+=1
@@ -200,7 +202,16 @@ class Client:
         
         self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
         
-    
+    def encryptDataCentral(self, dataToEnc):
+        encData=b""
+        if(len(dataToEnc)>245):
+            for j in range(len(dataToEnc), 245):
+                encData+=rsa.encrypt(dataToEnc[j:j+245], self.publickeyserver)
+        else:
+            encData=rsa.encrypt(dataToEnc, self.publickeyserver)
+            
+        return encData
+            
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
         
         flagforServerConnection=True#will be made false
@@ -289,8 +300,23 @@ class Client:
                 localCentralData=self.centralData[0]
                 localaddr=self.centralData[1]
                 self.centralData=""
+                if(len(localCentralData)<=256):
+                    localCentralData=rsa.decrypt(localCentralData, self.privatekeySelf)
+                else:
+                    splitData=b""
+                    
+                    splitArr=[]
+                    for k in range(0,len(localCentralData), 256):
+                        splitArr.append(localCentralData[k:k+256])
+                    
+                    print("split arr::::")
+                    print(splitArr)
+                    for l in splitArr:
+                        splitData+=rsa.decrypt(l, self.privatekeySelf)
+                    print(splitData)
+                    localCentralData=splitData
                 
-                localCentralData=rsa.decrypt(localCentralData, self.privatekeySelf)
+                print("decrypted central server data")        
                 print(localCentralData)
                 
                 if(b"ackcon" in localCentralData):
