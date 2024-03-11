@@ -44,7 +44,7 @@ class CentralServer:
         # Defining variables for the server:
         self.server_uptime = time.time()
         self.localPort = 20001
-        self.bufferSize = 4096
+        self.bufferSize = 128000
         self.active_clients_and_keys = {}
         self.received_messages = {}
         self.questions_and_answer = {}
@@ -93,7 +93,7 @@ class CentralServer:
         self.threadUDPserver.start()
 
     def rsa_keyGen(self):
-        self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(1024)
+        self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(2048)
         if (self.rsaPublicKey and self.rsaPrivateKey) is not None:
             return True
         return False
@@ -122,6 +122,16 @@ class CentralServer:
         additional_message[3] = additional_message[3].replace(b">", b"")
         return additional_message[3]
 
+
+    # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
+    def split_and_encrypt(self, message, client_public_key):
+        pass
+
+    # NEED To add a function that decrypts the message and combines the 245 byte chunks
+    def split_and_decrypt(self, message, client_public_key):
+        pass
+
+
     ## Apparently only the sendpubip and forwarder messages will be unecrypted, everything else will be assumed encrypted ##
     def parse_message(self, data, addr):
 
@@ -147,7 +157,22 @@ class CentralServer:
                 if message_sender not in self.active_clients_and_keys:
                     self.active_clients_and_keys.setdefault(message_sender, client_public_key)
                     message = (b"ackcon <" + pem + b"> <" + server_ip + b">")
-                    self.UDPserver.sendto(message, addr)
+
+                    temp_message = []
+                    temp_message.append(message[0:245])
+                    temp_message.append(message[245:])
+
+                    print(temp_message)
+
+                    print(len(message))
+
+                    #message = b"hey"
+                    encrypted_message = rsa.encrypt(temp_message[0], client_public_key)
+                    encrypted_message2 = rsa.encrypt(temp_message[1], client_public_key)
+                    print(len(encrypted_message + encrypted_message2))
+                    #encrypted_message = rsa.encrypt(message, client_public_key)
+
+                    self.UDPserver.sendto(encrypted_message + encrypted_message2, addr)
 
                 # Updates a client's public key if the client is already in the dictionary
                 elif message_sender in self.active_clients_and_keys:
@@ -234,12 +259,14 @@ class CentralServer:
                             elif question or answer not in self.questions_and_answer[addr[0].encode()]:
                                 self.questions_and_answer[addr[0].encode()] = [question, answer]
 
+                        print(b"THIS IS THE QUESTION RECEIVED:" + question + b"\nTHIS IS THE ANSWER RECEIVED:" + answer)
+
                         message = (b"ackquestion" + b" <" + message_content + b"> <"
                                    + str(self.fetch_ip_address()).encode() + b">")
 
                         print(message)
 
-                        encrypted_message = rsa.encrypt(message, self.rsaPublicKey)
+                        encrypted_message = rsa.encrypt(message, self.active_clients_and_keys[source_ip])
 
                         print(encrypted_message)
 
