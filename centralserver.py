@@ -126,28 +126,38 @@ class CentralServer:
     # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
     def split_and_encrypt(self, message, client_public_key):
 
-        whole_encrypted_message = None
+        whole_encrypted_message = b""
 
-        if (len(message) < 245):
+        if (len(message) < 240):
             whole_encrypted_message = rsa.encrypt(message, client_public_key)
         else:
-            for i in range(0, len(message), 245):
-                message_chunk = message[i:i + 245]
-                whole_encrypted_message = rsa.encrypt(message_chunk, client_public_key)
+            for i in range(0, len(message), 240):
+                message_chunk = message[i:i + 240]
+                whole_encrypted_message += rsa.encrypt(message_chunk, client_public_key)
 
         return whole_encrypted_message
 
     # NEED To add a function that decrypts the message and combines the 245 byte chunks
     def split_and_decrypt(self, message):
 
-        decrypted_message = None
+        decrypted_message = b""
 
-        if (len(message) < 245):
+        chunks = []
+
+        print(len(message))
+        if len(message) < 240:
             decrypted_message = rsa.decrypt(message, self.rsaPrivateKey)
         else:
-            for i in range(0, len(message), 245):
-                message_chunk = message[i:i + 245]
-                decrypted_message += rsa.decrypt(message_chunk, self.rsaPrivateKey)
+            for i in range(0, len(message), 240):
+                chunks.append(message[i:i + 240])
+
+            for chunk in chunks:
+                decrypted_message += rsa.decrypt(chunk, self.rsaPrivateKey)
+
+            #chunks = [message[i:i + 240] for i in range(0, len(message), 240)]
+            #print(chunks)
+            #for chunk in chunks:
+            #    decrypted_message += rsa.decrypt(chunk, self.rsaPrivateKey)
 
         return decrypted_message
 
@@ -256,7 +266,9 @@ class CentralServer:
 
             elif source_ip in self.active_clients_and_keys:
 
-                if not self.active_clients_and_keys[source_ip]:
+                if not data:
+                    print("No data received from client {}".format(addr))
+                elif not self.active_clients_and_keys[source_ip]:
                     print("Client {} has not sent their public key".format(addr))
                 else:
 
@@ -408,6 +420,38 @@ class CentralServer:
 
         if not keys_generated:
             print("##### Server has failed to generate RSA keys, retrying... #####")
+
+        print("### TEST #1 ###")
+        message = (b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                   b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                   b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                   b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                   b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"
+                   b"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+
+        print(len(message))
+        print(message)
+
+        print("ENCRYPTED MESSAGE")
+        encrypted_message = self.split_and_encrypt(message, self.rsaPublicKey)
+
+        print(encrypted_message)
+
+        print(len(encrypted_message))
+
+        print("DECRYPTED MESSAGE")
+        decrypted_message = self.split_and_decrypt(encrypted_message)
+
+        print(decrypted_message)
+
+        if (message == decrypted_message):
+            print("The message has been decrypted correctly")
+
+
+
+        #print(len(message))
+
+
 
         while keys_generated and (time.time() < server_refresh):
             data, address = self.UDPserver.recvfrom(self.bufferSize)
