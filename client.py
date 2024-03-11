@@ -169,7 +169,8 @@ class Client:
         # for i in range(len(tempArr)):
         #     tempArr[i]=tempArr[i].strip()
         
-        self.terminal_printer(tempArr) 
+        #self.terminal_printer(tempArr) 
+        print(tempArr)
         # for i in range(1,len(tempArr)):
         #     tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
         
@@ -208,8 +209,9 @@ class Client:
     
     def answerQuestion(self, qid, answer):
         message="answerquestion" + " <" + str(qid) + ">" + " <" + answer + ">"
+        encmessage=self.encrypt_data_central_server(message.encode())
         
-        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
+        self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
     def decrypt_data(self, data_to_decrypt):
         decrypted_data=b""
