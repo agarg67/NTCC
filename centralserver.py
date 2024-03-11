@@ -181,23 +181,26 @@ class CentralServer:
                     temp_message.append(message[0:245])
                     temp_message.append(message[245:])
 
-                    print(temp_message)
+                    #print(temp_message)
 
-                    print(len(message))
+                    #print(len(message))
 
                     #message = b"hey"
-                    encrypted_message = rsa.encrypt(temp_message[0], client_public_key)
-                    encrypted_message2 = rsa.encrypt(temp_message[1], client_public_key)
-                    print(len(encrypted_message + encrypted_message2))
-                    #encrypted_message = rsa.encrypt(message, client_public_key)
+                    #encrypted_message = rsa.encrypt(temp_message[0], client_public_key)
+                    #encrypted_message2 = rsa.encrypt(temp_message[1], client_public_key)
+                    #print(len(encrypted_message + encrypted_message2))
+                    encrypted_message = self.split_and_encrypt(message, client_public_key)
 
-                    self.UDPserver.sendto(encrypted_message + encrypted_message2, addr)
+                    self.UDPserver.sendto(encrypted_message, addr)
 
                 # Updates a client's public key if the client is already in the dictionary
                 elif message_sender in self.active_clients_and_keys:
                     self.active_clients_and_keys[message_sender] = client_public_key
                     message = (b"ackcon <" + pem + b"> <" + server_ip + b">")
-                    self.UDPserver.sendto(message, addr)
+
+                    encrypted_message = self.split_and_encrypt(message, client_public_key)
+
+                    self.UDPserver.sendto(encrypted_message, addr)
             else:
                 print("Connection denied {} due to wrong IP address in the message {}".format(addr, message_sender))
 
@@ -243,7 +246,8 @@ class CentralServer:
                             message = (b"ackipmapper <" + temp + b"> <" + server_ip + b">")
                             print(message)
 
-                            encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
+                            encrypted_message = self.split_and_encrypt(message, self.forwarderPublicKey)
+                            #encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
                             print(encrypted_message)
 
                             self.UDPserver.sendto(encrypted_message, addr)
@@ -257,7 +261,7 @@ class CentralServer:
                 else:
 
                     ciphertext = data
-                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
+                    decrypted_message = self.split_and_decrypt(ciphertext)
 
                     identifier_flag = self.message_identifier(decrypted_message)
                     message_content = self.main_message(decrypted_message)
@@ -285,7 +289,7 @@ class CentralServer:
 
                         print(message)
 
-                        encrypted_message = rsa.encrypt(message, self.active_clients_and_keys[source_ip])
+                        encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[source_ip])
 
                         print(encrypted_message)
 
