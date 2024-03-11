@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="10.182.149.63"
+    centralServerIp="10.155.131.118"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -230,9 +230,27 @@ class Client:
                 
                 if(localInputData=="sendpubip"):
                     self.sendPublickeyIP()
-                if(localInputData=="disconnectServer"):
+                elif(localInputData=="disconnectServer"):
                     message="receivedis"
                     self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
+                    
+                elif(localInputData=="sendquestion"):
+                    self.terminal_printer("please enter your question:")
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                    
+                    question=self.inputData
+                    self.inputData=""
+                    
+                    self.terminal_printer("Please enter your answer:")
+                    
+                    while(self.inputData==""):
+                        time.sleep(0.0001)
+                        
+                    answer=self.inputData
+                    self.inputData=""
+                    
+                    self.sendQuestionToServer(question, answer)
                     
                 # elif(localInputData=="sendquestion"):
                 #     print("send question:")
@@ -272,6 +290,9 @@ class Client:
                 localaddr=self.centralData[1]
                 self.centralData=""
                 
+                localCentralData=rsa.decrypt(localCentralData, self.privatekeySelf)
+                print(localCentralData)
+                
                 if(b"ackcon" in localCentralData):
                     self.terminal_printer("public key sent to server")
                     parsedDataArr=self.parseIncomingMessage(localCentralData)
@@ -288,26 +309,8 @@ class Client:
                     self.terminal_printer(encmessage)
                     
                     
-                    
-                    self.terminal_printer("please enter your question:")
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
-                    
-                    question=self.inputData
-                    self.inputData=""
-                    
-                    self.terminal_printer("Please enter your answer:")
-                    
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
-                        
-                    answer=self.inputData
-                    self.inputData=""
-                    
-                    self.sendQuestionToServer(question, answer)
-                    
-                    
-                    
+                if(b"unameCS" in localCentralData):
+                    pass
                 
                 if(b"sendquestion" in localCentralData):
                     
