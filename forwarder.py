@@ -22,6 +22,9 @@ class Relay:
     ranFlag = [False, False, False]
 
     centralKey = None
+    clusterkey1 = None
+    clusterkey2 = None
+    clusterkey3 = None
 
     def __init__(self):
         self.recieve = None
@@ -54,12 +57,12 @@ class Relay:
         pubkey = self.publicKey.save_pkcs1()
         source = addr[0].encode()
 
-        print("This is the data received: {}".format(data))
-        print("\nThis is the data received from: {}".format(addr))
+        print("This is the data received: {}\n".format(data))
+        print("\nThis is the data received from: {}\n".format(addr))
 
         identifier_flag = None
 
-        if(b"ackforwarder" in data):
+        if (b"ackforwarder" in data) or (b"ackcluster" in data):
             identifier_flag = self.message_identifier(data)
             message_content = self.main_message(data)
             message_sender = self.message_sender(data)
@@ -75,6 +78,17 @@ class Relay:
             print(encrypted_message)
 
             self.client.sendto(encrypted_message, addr)
+        elif identifier_flag == b"ackcluster":
+            if(self.clusterkey1 == None):
+                self.clusterkey1 = rsa.PublicKey.load_pkcs1(message_content.decode())
+                print(self.clusterkey1)
+            elif(self.clusterkey2 == None):
+                self.clusterkey2 = rsa.PublicKey.load_pkcs1(message_content.decode())
+            else:
+                self.clusterkey3 = rsa.PublicKey.load_pkcs1(message_content.decode())
+            self.clusterSend()
+            
+
         else:
             # possibly encrypted message which needs to be decrypted
             ciphertext = data
@@ -92,6 +106,15 @@ class Relay:
                 self.ipMap(temp)
                 self.sendM()
                 print(temp)
+            elif identifier_flag == b"cluster":
+                print("This is the message content: {}".format(message_content))
+                print("This is the message sender: {}".format(message_sender))
+            else:
+                print("nothing yet")
+
+
+
+            
 
 
 
@@ -110,8 +133,7 @@ class Relay:
         pubkey = self.publicKey.save_pkcs1()
         send = b"forwarder" + b" <" + pubkey + b">"+ b" <" + serverIP + b">"
         try:
-            self.client.sendto(send, ("172.20.10.10", 20001))
-            print(send)
+            self.client.sendto(send, ("172.20.10.9", 20001))
         except ConnectionResetError:
            print("centralserver is offline") 
 
@@ -122,9 +144,26 @@ class Relay:
         ipList = ips
         print(ipList[0])
 
-    def sendM(self):
-        randomIP = random.randrange(0,2)
-        print(randomIP)
+    def clusterInit(self):
+        serverIP = self.get_local_ip().encode()
+        pubkey = self.publicKey.save_pkcs1()
+        send = b"cluster" + b" <" + pubkey + b">"+ b" <" + serverIP + b">"
+        try:
+            self.client.sendto(send, ("10.159.233.223", 1410))
+        except ConnectionResetError:
+           print("centralserver is offline") 
+
+    def clusterSend(self):
+        serverIP = self.get_local_ip().encode()
+        #until i recieve clients ip and port
+        temp = json.dumps(("10.159.233.223", 9999)).encode('utf-8')
+        ###################
+        print(temp)
+        message = b"destination <" + temp + b">" + b" <" + serverIP + b">"
+        encryptMsg = rsa.encrypt(message, self.clusterkey1)
+        print(encryptMsg)
+        self.client.sendto(encryptMsg, ("10.159.233.223", 1410))
+
 
 
     #Forward Client Messages
@@ -155,6 +194,7 @@ class Relay:
 
     def run_program(self):
         self.centralStartup()
+        self.clusterInit()
         while True:
             try:
                 data, address = self.client.recvfrom(self.bufferSize)
