@@ -9,7 +9,6 @@ import rsa
 import signal
 
 import json
-import base64
 
 
 class UDPServerSocketManager:
@@ -29,9 +28,10 @@ class UDPServerSocketManager:
 class ipMapper_manager:
     def __init__(self):
         # This will be a list of the IP addresses of the servers
-        self.server_ips = [b"123.412.321", b"123.123.123", b"123.123.123"]
+        self.server_ips = ["123.412.321", "123.123.123", "123.123.123"]
 
     def __enter__(self):
+        #self.server_ips.append()
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -44,7 +44,7 @@ class CentralServer:
         # Defining variables for the server:
         self.server_uptime = time.time()
         self.localPort = 20001
-        self.bufferSize = 4096
+        self.bufferSize = 128000
         self.active_clients_and_keys = {}
         self.received_messages = {}
         self.questions_and_answer = {}
@@ -93,7 +93,7 @@ class CentralServer:
         self.threadUDPserver.start()
 
     def rsa_keyGen(self):
-        self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(1024)
+        self.rsaPublicKey, self.rsaPrivateKey = rsa.newkeys(2048)
         if (self.rsaPublicKey and self.rsaPrivateKey) is not None:
             return True
         return False
@@ -122,6 +122,35 @@ class CentralServer:
         additional_message[3] = additional_message[3].replace(b">", b"")
         return additional_message[3]
 
+
+    # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
+    def split_and_encrypt(self, message, client_public_key):
+
+        whole_encrypted_message = b""
+
+        if (len(message) <= 245):
+            whole_encrypted_message = rsa.encrypt(message, client_public_key)
+        else:
+            for i in range(0, len(message), 245):
+                message_chunk = message[i:i + 245]
+                whole_encrypted_message += rsa.encrypt(message_chunk, client_public_key)
+
+        return whole_encrypted_message
+
+    # NEED To add a function that decrypts the message and combines the 245 byte chunks
+    def split_and_decrypt(self, message):
+
+        decrypted_message = b""
+
+        if (len(message) <= 256):
+            decrypted_message = rsa.decrypt(message, self.rsaPrivateKey)
+        else:
+            for i in range(0, len(message), 256):
+                message_chunk = message[i:i + 256]
+                decrypted_message += rsa.decrypt(message_chunk, self.rsaPrivateKey)
+
+        return decrypted_message
+
     ## Apparently only the sendpubip and forwarder messages will be unecrypted, everything else will be assumed encrypted ##
     def parse_message(self, data, addr):
 
@@ -147,13 +176,31 @@ class CentralServer:
                 if message_sender not in self.active_clients_and_keys:
                     self.active_clients_and_keys.setdefault(message_sender, client_public_key)
                     message = (b"ackcon <" + pem + b"> <" + server_ip + b">")
-                    self.UDPserver.sendto(message, addr)
+
+                    temp_message = []
+                    temp_message.append(message[0:245])
+                    temp_message.append(message[245:])
+
+                    #print(temp_message)
+
+                    #print(len(message))
+
+                    #message = b"hey"
+                    #encrypted_message = rsa.encrypt(temp_message[0], client_public_key)
+                    #encrypted_message2 = rsa.encrypt(temp_message[1], client_public_key)
+                    #print(len(encrypted_message + encrypted_message2))
+                    encrypted_message = self.split_and_encrypt(message, client_public_key)
+
+                    self.UDPserver.sendto(encrypted_message, addr)
 
                 # Updates a client's public key if the client is already in the dictionary
                 elif message_sender in self.active_clients_and_keys:
                     self.active_clients_and_keys[message_sender] = client_public_key
                     message = (b"ackcon <" + pem + b"> <" + server_ip + b">")
-                    self.UDPserver.sendto(message, addr)
+
+                    encrypted_message = self.split_and_encrypt(message, client_public_key)
+
+                    self.UDPserver.sendto(encrypted_message, addr)
             else:
                 print("Connection denied {} due to wrong IP address in the message {}".format(addr, message_sender))
 
@@ -190,31 +237,31 @@ class CentralServer:
 
                         if (message_content == key_phrase) and (source_ip == message_sender):
 
-                            server_ips = ["123.412.321", "123.123.123", "123.123.123"]
+                            #temp = json.dumps(server_ips).encode('utf-8')
+                            #print(temp)
 
-
-
-                            temp = json.dumps(server_ips).encode('utf-8')
+                            temp = json.dumps(ip_map.server_ips).encode('utf-8')
                             print(temp)
 
                             message = (b"ackipmapper <" + temp + b"> <" + server_ip + b">")
                             print(message)
 
-                            encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
+                            encrypted_message = self.split_and_encrypt(message, self.forwarderPublicKey)
+                            #encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
                             print(encrypted_message)
 
                             self.UDPserver.sendto(encrypted_message, addr)
                         else:
                             print("Forwarder has sent an incorrect key phrase or IP address")
 
-
             elif source_ip in self.active_clients_and_keys:
 
-                if not self.active_clients_and_keys[addr[0].encode()]:
+                if not self.active_clients_and_keys[source_ip]:
                     print("Client {} has not sent their public key".format(addr))
                 else:
+
                     ciphertext = data
-                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
+                    decrypted_message = self.split_and_decrypt(ciphertext)
 
                     identifier_flag = self.message_identifier(decrypted_message)
                     message_content = self.main_message(decrypted_message)
@@ -226,8 +273,8 @@ class CentralServer:
                         answer = self.additional_message_editor(decrypted_message)
 
                         if not self.questions_and_answer:
-                            self.questions_and_answer.setdefault(addr[0].encode(), [question, answer])
-                        elif addr[0].encode() in self.questions_and_answer:
+                            self.questions_and_answer.setdefault(addr, [question, answer])
+                        elif source_ip in self.questions_and_answer:
 
                             if self.questions_and_answer[addr[0].encode()] != [question, answer]:
                                 self.questions_and_answer[addr[0].encode()] = [question, answer]
@@ -235,12 +282,14 @@ class CentralServer:
                             elif question or answer not in self.questions_and_answer[addr[0].encode()]:
                                 self.questions_and_answer[addr[0].encode()] = [question, answer]
 
+                        print(b"THIS IS THE QUESTION RECEIVED:" + question + b"\nTHIS IS THE ANSWER RECEIVED:" + answer)
+
                         message = (b"ackquestion" + b" <" + message_content + b"> <"
                                    + str(self.fetch_ip_address()).encode() + b">")
 
                         print(message)
 
-                        encrypted_message = rsa.encrypt(message, self.rsaPublicKey)
+                        encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[source_ip])
 
                         print(encrypted_message)
 
