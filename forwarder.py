@@ -19,6 +19,7 @@ class Relay:
     bufferSize = 4096
     mainMsg = ""
     ipList = []
+    ranFlag = [False, False, False]
 
     centralKey = None
 
@@ -88,6 +89,8 @@ class Relay:
                 print("This is the message sender: {}".format(message_sender))
 
                 temp = json.loads(message_content.decode())
+                self.ipMap(temp)
+                self.sendM()
                 print(temp)
 
 
@@ -107,7 +110,7 @@ class Relay:
         pubkey = self.publicKey.save_pkcs1()
         send = b"forwarder" + b" <" + pubkey + b">"+ b" <" + serverIP + b">"
         try:
-            self.client.sendto(send, ("192.168.4.24", 20001))
+            self.client.sendto(send, ("172.20.10.10", 20001))
             print(send)
         except ConnectionResetError:
            print("centralserver is offline") 
@@ -116,7 +119,12 @@ class Relay:
     ################################################################################################################################
     def ipMap(self, ips):
         ipList = []
-        ipList.append("")
+        ipList = ips
+        print(ipList[0])
+
+    def sendM(self):
+        randomIP = random.randrange(0,2)
+        print(randomIP)
 
 
     #Forward Client Messages
