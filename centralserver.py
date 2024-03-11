@@ -9,7 +9,6 @@ import rsa
 import signal
 
 import json
-import base64
 
 
 class UDPServerSocketManager:
@@ -29,9 +28,10 @@ class UDPServerSocketManager:
 class ipMapper_manager:
     def __init__(self):
         # This will be a list of the IP addresses of the servers
-        self.server_ips = [b"123.412.321", b"123.123.123", b"123.123.123"]
+        self.server_ips = ["123.412.321", "123.123.123", "123.123.123"]
 
     def __enter__(self):
+        #self.server_ips.append()
         pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -190,11 +190,10 @@ class CentralServer:
 
                         if (message_content == key_phrase) and (source_ip == message_sender):
 
-                            server_ips = ["123.412.321", "123.123.123", "123.123.123"]
+                            #temp = json.dumps(server_ips).encode('utf-8')
+                            #print(temp)
 
-
-
-                            temp = json.dumps(server_ips).encode('utf-8')
+                            temp = json.dumps(ip_map.server_ips).encode('utf-8')
                             print(temp)
 
                             message = (b"ackipmapper <" + temp + b"> <" + server_ip + b">")
@@ -207,12 +206,12 @@ class CentralServer:
                         else:
                             print("Forwarder has sent an incorrect key phrase or IP address")
 
-
             elif source_ip in self.active_clients_and_keys:
 
-                if not self.active_clients_and_keys[addr[0].encode()]:
+                if not self.active_clients_and_keys[source_ip]:
                     print("Client {} has not sent their public key".format(addr))
                 else:
+
                     ciphertext = data
                     decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
 
@@ -226,8 +225,8 @@ class CentralServer:
                         answer = self.additional_message_editor(decrypted_message)
 
                         if not self.questions_and_answer:
-                            self.questions_and_answer.setdefault(addr[0].encode(), [question, answer])
-                        elif addr[0].encode() in self.questions_and_answer:
+                            self.questions_and_answer.setdefault(addr, [question, answer])
+                        elif source_ip in self.questions_and_answer:
 
                             if self.questions_and_answer[addr[0].encode()] != [question, answer]:
                                 self.questions_and_answer[addr[0].encode()] = [question, answer]
