@@ -37,7 +37,7 @@ class Client:
     relayData=""
     
     # this is the fixed buffersixe for recieving data
-    bufferSize=4096
+    bufferSize=128000
     
     publicKeySelf=""
     privatekeySelf=""
@@ -214,21 +214,27 @@ class Client:
     def decrypt_data(self, data_to_decrypt):
         decrypted_data=b""
         if len(data_to_decrypt)<=256:
+            print("normal decrypted data")
             decrypted_data=rsa.decrypt(data_to_decrypt, self.privatekeySelf)
         else:
-            for i in range(len(data_to_decrypt), 256):
-                decrypted_data+=rsa.decrypt(data_to_decrypt[i:1+256], self.privatekeySelf)
+            for i in range(0, len(data_to_decrypt), 256):
+                chunk=data_to_decrypt[i:i+256]
+                chunk=rsa.decrypt(chunk, self.privatekeySelf)
+                print("decrypted chunk:", chunk)
+                decrypted_data+=chunk
             
         return decrypted_data
     
     def encrypt_data_central_server(self, data_to_encrypt):
         encrypted_data=b""
         if len(data_to_encrypt)<=245:
-            encrypted_data=rsa.decrypt(data_to_encrypt, self.publickeyserver)
+            encrypted_data=rsa.encrypt(data_to_encrypt, self.publickeyserver)
         else:
-            for i in range(len(data_to_encrypt), 245):
-                encrypted_data+=rsa.decrypt(data_to_encrypt[i:1+245], self.publickeyserver)
-            
+            for i in range(0,len(data_to_encrypt), 245):
+                encrypted_data+=rsa.encrypt(data_to_encrypt[i:i+245], self.publickeyserver)
+        print("encrypted data:")
+        print(encrypted_data)
+           
         return encrypted_data
         
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
@@ -321,6 +327,7 @@ class Client:
                 self.centralData=""
                 
                 localCentralData=self.decrypt_data(localCentralData)
+                print("decryptedData")
                 print(localCentralData)
                 
                 if(b"ackcon" in localCentralData):

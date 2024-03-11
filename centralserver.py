@@ -126,27 +126,27 @@ class CentralServer:
     # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
     def split_and_encrypt(self, message, client_public_key):
 
-        whole_encrypted_message = None
+        whole_encrypted_message = b""
 
-        if (len(message) < 245):
+        if (len(message) <= 245):
             whole_encrypted_message = rsa.encrypt(message, client_public_key)
         else:
             for i in range(0, len(message), 245):
                 message_chunk = message[i:i + 245]
-                whole_encrypted_message = rsa.encrypt(message_chunk, client_public_key)
+                whole_encrypted_message += rsa.encrypt(message_chunk, client_public_key)
 
         return whole_encrypted_message
 
     # NEED To add a function that decrypts the message and combines the 245 byte chunks
     def split_and_decrypt(self, message):
 
-        decrypted_message = None
+        decrypted_message = b""
 
-        if (len(message) < 245):
+        if (len(message) <= 256):
             decrypted_message = rsa.decrypt(message, self.rsaPrivateKey)
         else:
-            for i in range(0, len(message), 245):
-                message_chunk = message[i:i + 245]
+            for i in range(0, len(message), 256):
+                message_chunk = message[i:i + 256]
                 decrypted_message += rsa.decrypt(message_chunk, self.rsaPrivateKey)
 
         return decrypted_message
