@@ -18,7 +18,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="10.155.131.118"
+    centralServerIp="192.168.19.37"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -56,7 +56,7 @@ class Client:
         self.clientRelayPort=portPass2
         
         #key=rsa.generate(1024)
-        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(1024)
+        self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
         #random_generator = Random.new().read
         #self.privatekeySelf=RSA.generate(1024, random_generator)
         #self.publicKeySelf=self.privatekeySelf.publickey()
@@ -311,7 +311,7 @@ class Client:
                 localaddr=self.centralData[1]
                 self.centralData=""
                 
-                localCentralData=rsa.decrypt(localCentralData, self.privatekeySelf)
+                localCentralData=self.decrypt_data(localCentralData)
                 print(localCentralData)
                 
                 if(b"ackcon" in localCentralData):
