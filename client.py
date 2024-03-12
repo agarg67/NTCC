@@ -265,31 +265,31 @@ class Client:
         
         while(True):
             
-            if(self.inputData!="" and "CMD#?" in self.inputData):
-                self.terminal_printer(self.inputData)
-                localInputData=self.inputData
-                self.inputData=""
+            # if(self.inputData!="" and "CMD#?" in self.inputData):
+            #     self.terminal_printer(self.inputData)
+            #     localInputData=self.inputData
+            #     self.inputData=""
 
-                ### The following if statements are bare-bone to purely test communication between client and server, will
-                ### need to be changed to further continue sending messages to the server to store the information.
-                if(localInputData=="CMD#?reqcon"):
-                    message="reqcon"
-                    message_bytes = message.encode('ascii')
-                    self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort)) # will be changed according to central server ip
+            #     ### The following if statements are bare-bone to purely test communication between client and server, will
+            #     ### need to be changed to further continue sending messages to the server to store the information.
+            #     if(localInputData=="CMD#?reqcon"):
+            #         message="reqcon"
+            #         message_bytes = message.encode('ascii')
+            #         self.UDPClientCentralSocket.sendto(message_bytes,(self.centralServerIp, self.centralServerPort)) # will be changed according to central server ip
 
 
-            elif(self.inputData!=""):
+            if(self.inputData!=""):
                 self.terminal_printer(self.inputData)
                 localInputData=self.inputData
                 self.inputData=""
                 
-                if(localInputData=="sendpubip"):
+                if(localInputData=="sendpubip" or localInputData=="CMD#?sendpubip"):
                     self.sendPublickeyIP()
                 elif(localInputData=="disconnectServer"):
                     message="receivedis"
                     self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
                     
-                elif(localInputData=="sendquestion"):
+                elif(localInputData=="sendquestion" or localInputData=="CMD#?sendquestion"):
                     self.terminal_printer("please enter your question:")
                     while(self.inputData==""):
                         time.sleep(0.0001)
@@ -347,6 +347,8 @@ class Client:
                 if(b"dataSent" in localRelayData): # will be changed
                     message="gotMessage"
                     self.UDPClientRelaySocket.sendto(message.encode(), localRelayAddr)
+                
+                localRelayData=""
                 
             if(self.centralData!=""):
                 self.terminal_printer(self.centralData)
