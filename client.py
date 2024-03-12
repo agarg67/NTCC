@@ -48,6 +48,7 @@ class Client:
     questionId=0
     messageId=0
     
+    communicationFlag=False
     
     # init used to initialize the object
     def __init__(self, ipPass, portPass, portPass2): #self key word is needed as the first parameter in any function that belongs to the class and act opposite to this
@@ -169,7 +170,8 @@ class Client:
         # for i in range(len(tempArr)):
         #     tempArr[i]=tempArr[i].strip()
         
-        self.terminal_printer(tempArr) 
+        #self.terminal_printer(tempArr) 
+        print(tempArr)
         # for i in range(1,len(tempArr)):
         #     tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
         
@@ -204,12 +206,15 @@ class Client:
     def sendMessage(self, message):
         message="message" + " <" + str(self.messageId) + ">" + " <" + message + ">"
         
+        encmessage=self.encrypt_data_forwarder(message.encode())
+        self.UDPClientRelaySocket.sendto(encmessage, (self.forwarderServerIp, self.forwarderServerPort))
         self.messageId+=1
     
     def answerQuestion(self, qid, answer):
         message="answerquestion" + " <" + str(qid) + ">" + " <" + answer + ">"
+        encmessage=self.encrypt_data_central_server(message.encode())
         
-        self.UDPClientCentralSocket.sendto(message.encode(),(self.centralServerIp, self.centralServerPort))
+        self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
     def decrypt_data(self, data_to_decrypt):
         decrypted_data=b""
@@ -226,12 +231,26 @@ class Client:
         return decrypted_data
     
     def encrypt_data_central_server(self, data_to_encrypt):
+        keyForEnc=self.publickeyserver
         encrypted_data=b""
         if len(data_to_encrypt)<=245:
-            encrypted_data=rsa.encrypt(data_to_encrypt, self.publickeyserver)
+            encrypted_data=rsa.encrypt(data_to_encrypt, keyForEnc)
         else:
             for i in range(0,len(data_to_encrypt), 245):
-                encrypted_data+=rsa.encrypt(data_to_encrypt[i:i+245], self.publickeyserver)
+                encrypted_data+=rsa.encrypt(data_to_encrypt[i:i+245], keyForEnc)
+        print("encrypted data:")
+        print(encrypted_data)
+           
+        return encrypted_data
+    
+    def encrypt_data_forwarder(self, data_to_encrypt):
+        keyForEnc=self.publickeyPeer
+        encrypted_data=b""
+        if len(data_to_encrypt)<=245:
+            encrypted_data=rsa.encrypt(data_to_encrypt, keyForEnc)
+        else:
+            for i in range(0,len(data_to_encrypt), 245):
+                encrypted_data+=rsa.encrypt(data_to_encrypt[i:i+245], keyForEnc)
         print("encrypted data:")
         print(encrypted_data)
            
@@ -287,6 +306,12 @@ class Client:
                     self.inputData=""
                     
                     self.sendQuestionToServer(question, answer)
+                else:
+                    
+                    if(self.communicationFlag==True):
+                        self.sendMessage(localInputData)
+                
+                localInputData=""
                     
                 # elif(localInputData=="sendquestion"):
                 #     print("send question:")
@@ -315,6 +340,9 @@ class Client:
                 localRelayData=self.relayData[0]
                 localRelayAddr=self.relayData[1]
                 self.relayData=""
+                
+                localRelayData=self.decrypt_data(localRelayData)
+                print(localRelayData)
                 
                 if(b"dataSent" in localRelayData): # will be changed
                     message="gotMessage"
@@ -449,6 +477,12 @@ class Client:
                     self.terminal_printer("Your Answer has been accepted, we will move forward with completing the connection!")
                     
                     #space here to code for getting ip map and public key
+                    
+                    
+                    #may be moved
+                    self.communicationFlag=True
+                    print("now please use your textbox to send messages to your partner")
+                    
                 
                 if(b"nakanswer" in localCentralData):
                     self.terminal_printer("Your answer has been rejected, please try from begining. Current session is terminated")
@@ -456,19 +490,23 @@ class Client:
                     #space here to code for more things
                     
                 if(b"sendcomreq" in localCentralData):
-                    print("got list of ip address+port")
+                    print("got ip address+port")
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     self.publickeyPeer=parsedMessage[1]
                     ipportListstring=parsedMessage[2]
-                    ipportListstringsplit=ipportListstring.split(" ")
+                    ipportListstringsplit=ipportListstring.strip()
                     
                     tempVarArr=[]
-                    for i in range(len(ipportListstringsplit)):
-                        tempVar=ipportListstringsplit.at(i)
-                        tempVar=tempVar[1:len(tempVar)-1]
-                        tempVar=tempVar.split(",")
-                        tempVarArr.append(tempVar)
+                    #for i in range(len(ipportListstringsplit)):
+                        #tempVar=ipportListstringsplit.at(i)
+                    tempVar=ipportListstringsplit
+                    tempVar=tempVar.split(",")
+                    tempVar[0]=tempVar.strip()
+                    tempVar[1]=int(tempVar[1])
+                    tempVarArr.append(tempVar)
                     
+                    self.forwarderServerIp=tempVar[0]
+                    self.forwarderServerPort=tempVar[1]
                     
                     self.relayServerIpporttupleList=tempVarArr
                     
@@ -476,7 +514,7 @@ class Client:
                         self.relayServerIpList.append(j[0])
                         self.relayServerPortList.append(j[1])
                     
-                    print("stored ip-port list")
+                    print("stored ip-port")
                         
                     
                 localCentralData=""
