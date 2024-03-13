@@ -161,9 +161,14 @@ class Client:
             tempArr[0]=tempArr[0].decode().strip()
             cmd=tempArr[0]
             tempVar=tempArr[1][0:len(tempArr[1])-1]
-            if(b"NO OTHER" not in tempVar):
-                tempVar=tempVar.split(",")
             print(tempVar)
+            if(b"NO OTHER" not in tempVar):
+                #print(tempVar)
+                tempVar=json.loads(tempVar.decode())
+            
+            print(tempVar)
+            for i in range(len(tempVar)):
+                tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
             
             tempArr=[cmd, tempVar]
             
@@ -454,7 +459,7 @@ class Client:
                             partnerName=partnerName.strip()
                             print(partnerName)
                             
-                        message= "sendpartnerserver " + "<" + partnerName +">"
+                        message= "sendpartnerserver " + "<" + partnerName +">" + " <" + (str(self.client_ip_address))+">"
                         enc=self.encrypt_data_central_server(message.encode())
                         
                         self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
