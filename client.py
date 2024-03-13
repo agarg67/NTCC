@@ -395,7 +395,7 @@ class Client:
                             nameFlag=True
                     
                     name=name[0:3] + "##" + name[3:]
-                    message= "sendnameserver " + "<" + name +">"
+                    message= "sendnameserver " + "<" + name +">" + " <" + (str(self.client_ip_address)) + ">"
                     enc=self.encrypt_data_central_server(message.encode())
                     
                     self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
