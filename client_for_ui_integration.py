@@ -13,6 +13,19 @@ import rsa
 # contains bulk of the code for socket communication
 class Client:
     
+    def get_local_ip(): # this method is used to resolve your own ip address
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('192.255.255.254', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP    
+
+
     #variables initial state
     client_ip_address="localhost"
     clientCentralPort=0  
@@ -325,39 +338,3 @@ class Client:
                     
                           
 
-def get_local_ip(): # this method is used to resolve your own ip address
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        # doesn't even have to be reachable
-        s.connect(('192.255.255.254', 1))
-        IP = s.getsockname()[0]
-    except:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    return IP    
-
-def main(): # entry function of the program
-    
-    #fetching the ip address here
-    localIP=get_local_ip() 
-    
-    #setting ports for socket communication
-    randPort=random.randrange(1500, 50000, 1)
-    
-    randPort2=random.randrange(1500, 50000, 1)
-    
-    while(randPort2==randPort):
-        randPort2=random.randrange(1500, 50000, 1)
-    
-    print("central port:",randPort)
-    print("relay port:",randPort2)
-    print(localIP)
-    
-    #creating a client object to start program 
-    client = Client(localIP, randPort, randPort2)
-    
-    # we enter client program, everything beyond this point is coded inside the client class
-    client.run_program()
-
-main() # starting the program
