@@ -8,6 +8,7 @@ import random
 import threading
 import time
 import rsa
+import time
 
 import json
 
@@ -95,9 +96,19 @@ class Forwarder:
             print(encrypted_message)
 
             self.client.sendto(encrypted_message, addr)
-        elif identifier_flag == b"ackcluster":            
-            self.clusterkey1 = rsa.PublicKey.load_pkcs1(message_content.decode())
-            self.clusterSend(self.clusterkey1, addr)
+        elif identifier_flag == b"ackcluster":    
+            
+            self.clusterkey = rsa.PublicKey.load_pkcs1(message_content.decode())
+            if addr[1] == 1410:
+                self.clusterkey1 = self.clusterkey
+                print(1)
+            if addr[1] == 3784:
+                self.clusterkey2 = self.clusterkey
+                print(2)
+            if addr[1] == 8473:
+                self.clusterkey3 = self.clusterkey
+                print(3)
+            self.clusterSend(self.clusterkey, addr)
             
 
         else:
@@ -210,6 +221,7 @@ class Forwarder:
         ip = self.get_local_ip()
         print(ip)
         self.centralStartup()
+        time.sleep(3)
         self.clusterInit()
         while True:
             try:
