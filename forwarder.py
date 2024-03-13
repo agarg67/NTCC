@@ -13,7 +13,13 @@ import json
 
 
 
-class Relay:
+class Forwarder:
+    centralServerIp = "192.168.0.128"
+    centralPort = 20001
+
+    noiseList = [("192.168.0.128", 1410), ("192.168.0.128", 3784), ("192.168.0.128", 8473)]
+    noise = None
+
     server=""
     serverport=9999
     bufferSize = 4096
@@ -22,6 +28,8 @@ class Relay:
     ranFlag = [False, False, False]
 
     centralKey = None
+    clusterKeyList = []
+    clusterkey = None
     clusterkey1 = None
     clusterkey2 = None
     clusterkey3 = None
@@ -36,6 +44,15 @@ class Relay:
 
         self.client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
         self.client.bind(('', self.serverport))
+
+        '''self.threadInput = threading.Thread(target=self.getserver_input)
+        self.threadInput.daemon = True
+        self.threadInput.start()'''
+
+    def getserver_input(self):
+        while True:
+            data, addr = self.client.recvfrom(self.bufferSize)
+            self.parse_message(data, addr)
 
     def message_identifier(self, data):
         message_identifier = data.split(b" <")
@@ -78,15 +95,9 @@ class Relay:
             print(encrypted_message)
 
             self.client.sendto(encrypted_message, addr)
-        elif identifier_flag == b"ackcluster":
-            if(self.clusterkey1 == None):
-                self.clusterkey1 = rsa.PublicKey.load_pkcs1(message_content.decode())
-                print(self.clusterkey1)
-            elif(self.clusterkey2 == None):
-                self.clusterkey2 = rsa.PublicKey.load_pkcs1(message_content.decode())
-            else:
-                self.clusterkey3 = rsa.PublicKey.load_pkcs1(message_content.decode())
-            self.clusterSend()
+        elif identifier_flag == b"ackcluster":            
+            self.clusterkey1 = rsa.PublicKey.load_pkcs1(message_content.decode())
+            self.clusterSend(self.clusterkey1, addr)
             
 
         else:
@@ -104,7 +115,7 @@ class Relay:
 
                 temp = json.loads(message_content.decode())
                 self.ipMap(temp)
-                self.sendM()
+                #self.sendM()
                 print(temp)
             elif identifier_flag == b"cluster":
                 print("This is the message content: {}".format(message_content))
@@ -133,7 +144,7 @@ class Relay:
         pubkey = self.publicKey.save_pkcs1()
         send = b"forwarder" + b" <" + pubkey + b">"+ b" <" + serverIP + b">"
         try:
-            self.client.sendto(send, ("172.20.10.9", 20001))
+            self.client.sendto(send, (self.centralServerIp, 20001))
         except ConnectionResetError:
            print("centralserver is offline") 
 
@@ -149,20 +160,23 @@ class Relay:
         pubkey = self.publicKey.save_pkcs1()
         send = b"cluster" + b" <" + pubkey + b">"+ b" <" + serverIP + b">"
         try:
-            self.client.sendto(send, ("10.159.233.223", 1410))
+            for i in range(len(self.noiseList)):
+                self.client.sendto(send, self.noiseList[i])
         except ConnectionResetError:
            print("centralserver is offline") 
 
-    def clusterSend(self):
+    def clusterSend(self, key, addr):
         serverIP = self.get_local_ip().encode()
         #until i recieve clients ip and port
-        temp = json.dumps(("10.159.233.223", 9999)).encode('utf-8')
+        temp = json.dumps(("111.111.111.111", 9999)).encode('utf-8')
         ###################
         print(temp)
         message = b"destination <" + temp + b">" + b" <" + serverIP + b">"
-        encryptMsg = rsa.encrypt(message, self.clusterkey1)
+        i = 0
+        encryptMsg = rsa.encrypt(message, key)
         print(encryptMsg)
-        self.client.sendto(encryptMsg, ("10.159.233.223", 1410))
+
+        self.client.sendto(encryptMsg, addr)
 
 
 
@@ -193,6 +207,8 @@ class Relay:
         return IP  
 
     def run_program(self):
+        ip = self.get_local_ip()
+        print(ip)
         self.centralStartup()
         self.clusterInit()
         while True:
@@ -205,10 +221,8 @@ class Relay:
 ##########################################################################################################################  
 
 def main():
-    #ip = get_local_ip()
-    #print(ip)
-    relay = Relay()
-    relay.run_program()
+    forwarder = Forwarder()
+    forwarder.run_program()
 
 if __name__ == "__main__":
     print(os.name)

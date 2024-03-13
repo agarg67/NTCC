@@ -9,7 +9,7 @@ import time
 import rsa
 
 class Noise:
-    server=""
+    forwarderIP = "192.168.0.128"
     serverport= 1410
     bufferSize = 4096
     mainMsg = ""
@@ -58,6 +58,7 @@ class Noise:
 
         if identifier_flag == b"cluster":
             self.forwarderPublicKey = rsa.PublicKey.load_pkcs1(message_content.decode())
+            print(self.publicKey)
 
             message = (b"ackcluster <" + pubkey + b"> <" + serverIP + b">")
             self.UDPserver.sendto(message, addr)
