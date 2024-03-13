@@ -61,8 +61,8 @@ class Client:
         #self.publicKeySelf=self.privatekeySelf.publickey()
         
         
-        print(self.publicKeySelf)
-        print(self.privatekeySelf)
+        self.callback(self.publicKeySelf)
+        self.callback(self.privatekeySelf)
         
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
@@ -95,7 +95,7 @@ class Client:
         self.threadRelay.start()
         
     def terminal_printer(self, *dataToPrint):
-        print(dataToPrint)
+        self.callback(dataToPrint)
         
     def asynchrounous_input(self):
         
@@ -134,7 +134,7 @@ class Client:
         # for i in range(1,len(tempArr)):
         #     tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
         
-        #print(tempArr)
+        #self.callback(tempArr)
         
         finalArr=tempArr
         
@@ -202,14 +202,14 @@ class Client:
                     self.sendPublickeyIP()
                     
                 # elif(localInputData=="sendquestion"):
-                #     print("send question:")
+                #     self.callback("send question:")
                 #     while(self.inputData==""):
                 #         time.sleep(0.0001)
                     
                 #     question=self.inputData
                 #     self.inputData=""
                     
-                #     print("Please enter your answer:")
+                #     self.callback("Please enter your answer:")
                     
                 #     while(self.inputData==""):
                 #         time.sleep(0.0001)
