@@ -7,7 +7,7 @@ import random
 import threading
 import time
 import rsa
-
+import json
 
 # client class
 # contains bulk of the code for socket communication
@@ -161,7 +161,8 @@ class Client:
             tempArr[0]=tempArr[0].decode().strip()
             cmd=tempArr[0]
             tempVar=tempArr[1][0:len(tempArr[1])-1]
-            tempVar=tempVar.split(",")
+            if(b"NO OTHER" not in tempVar):
+                tempVar=tempVar.split(",")
             print(tempVar)
             
             tempArr=[cmd, tempVar]
@@ -427,35 +428,38 @@ class Client:
                     partnerName=""
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     
-                    nameArray=parsedMessage[1]
-                    
-                    for i in nameArray:
-                        print(i)
+                    if("NO OTHER" not in parsedMessage[1]):
+                        nameArray=parsedMessage[1]
                         
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
-                    
-                    partnerName=self.inputData
-                    self.inputData=""
-                    
-                    partnerName=partnerName.strip()
-                    print(partnerName)
-                    
-                    while(partnerName not in nameArray):
-                        print("name not present, please choose again")
+                        for i in nameArray:
+                            print(i)
+                            
                         while(self.inputData==""):
                             time.sleep(0.0001)
-                    
+                        
                         partnerName=self.inputData
                         self.inputData=""
-                    
+                        
                         partnerName=partnerName.strip()
                         print(partnerName)
                         
-                    message= "sendpartnerserver " + "<" + partnerName +">"
-                    enc=self.encrypt_data_central_server(message.encode())
-                    
-                    self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                        while(partnerName not in nameArray):
+                            print("name not present, please choose again")
+                            while(self.inputData==""):
+                                time.sleep(0.0001)
+                        
+                            partnerName=self.inputData
+                            self.inputData=""
+                        
+                            partnerName=partnerName.strip()
+                            print(partnerName)
+                            
+                        message= "sendpartnerserver " + "<" + partnerName +">"
+                        enc=self.encrypt_data_central_server(message.encode())
+                        
+                        self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                    else:
+                        print("no other client right now please try in some time")
                     
                     
                 if(b"sendquestion" in localCentralData):
