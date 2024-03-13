@@ -1,7 +1,9 @@
 import sys
+import random
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QPushButton, QVBoxLayout, QWidget
 from PyQt5.QtCore import QThread, pyqtSignal
 from client_for_ui_integration import Client  # Adjusted to import the provided client
+
 
 class ClientThread(QThread):
     updateSignal = pyqtSignal(str)
@@ -24,7 +26,23 @@ class ClientThread(QThread):
 class ClientGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.client = Client()  # Assuming the Client class has necessary initialization parameters
+
+        #fetching the ip address here
+        localIP=Client.get_local_ip() 
+        
+        #setting ports for socket communication
+        randPort=random.randrange(1500, 50000, 1)
+        
+        randPort2=random.randrange(1500, 50000, 1)
+        
+        while(randPort2==randPort):
+            randPort2=random.randrange(1500, 50000, 1)
+    
+        print("central port:",randPort)
+        print("relay port:",randPort2)
+        print(localIP)
+
+        self.client = Client(localIP, randPort, randPort2)  # Assuming the Client class has necessary initialization parameters
         self.initUI()
 
     def initUI(self):
@@ -56,6 +74,7 @@ class ClientGUI(QMainWindow):
         self.messageLog.append(message)
 
 def main():
+
     app = QApplication(sys.argv)
     gui = ClientGUI()
     gui.show()

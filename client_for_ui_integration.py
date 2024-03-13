@@ -13,6 +13,19 @@ import rsa
 # contains bulk of the code for socket communication
 class Client:
     
+    def get_local_ip(): # this method is used to resolve your own ip address
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('192.255.255.254', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP    
+
+
     #variables initial state
     client_ip_address="localhost"
     clientCentralPort=0  
@@ -61,8 +74,8 @@ class Client:
         #self.publicKeySelf=self.privatekeySelf.publickey()
         
         
-        self.callback(self.publicKeySelf)
-        self.callback(self.privatekeySelf)
+        print(self.publicKeySelf)
+        print(self.privatekeySelf)
         
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
@@ -95,7 +108,7 @@ class Client:
         self.threadRelay.start()
         
     def terminal_printer(self, *dataToPrint):
-        self.callback(dataToPrint)
+        print(dataToPrint)
         
     def asynchrounous_input(self):
         
@@ -134,7 +147,7 @@ class Client:
         # for i in range(1,len(tempArr)):
         #     tempArr[i]=tempArr[i][0:len(tempArr[i])-1]
         
-        #self.callback(tempArr)
+        #print(tempArr)
         
         finalArr=tempArr
         
@@ -202,14 +215,14 @@ class Client:
                     self.sendPublickeyIP()
                     
                 # elif(localInputData=="sendquestion"):
-                #     self.callback("send question:")
+                #     print("send question:")
                 #     while(self.inputData==""):
                 #         time.sleep(0.0001)
                     
                 #     question=self.inputData
                 #     self.inputData=""
                     
-                #     self.callback("Please enter your answer:")
+                #     print("Please enter your answer:")
                     
                 #     while(self.inputData==""):
                 #         time.sleep(0.0001)
@@ -325,39 +338,3 @@ class Client:
                     
                           
 
-def get_local_ip(): # this method is used to resolve your own ip address
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-        # doesn't even have to be reachable
-        s.connect(('192.255.255.254', 1))
-        IP = s.getsockname()[0]
-    except:
-        IP = '127.0.0.1'
-    finally:
-        s.close()
-    return IP    
-
-def main(): # entry function of the program
-    
-    #fetching the ip address here
-    localIP=get_local_ip() 
-    
-    #setting ports for socket communication
-    randPort=random.randrange(1500, 50000, 1)
-    
-    randPort2=random.randrange(1500, 50000, 1)
-    
-    while(randPort2==randPort):
-        randPort2=random.randrange(1500, 50000, 1)
-    
-    print("central port:",randPort)
-    print("relay port:",randPort2)
-    print(localIP)
-    
-    #creating a client object to start program 
-    client = Client(localIP, randPort, randPort2)
-    
-    # we enter client program, everything beyond this point is coded inside the client class
-    client.run_program()
-
-main() # starting the program
