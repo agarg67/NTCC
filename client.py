@@ -19,7 +19,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.4.24"
+    centralServerIp="192.168.191.224"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -259,10 +259,8 @@ class Client:
         
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
         
-        flagforServerConnection=True#will be made false
-        
-        while(flagforServerConnection==False):
-            time.sleep(0.00001)# will be changed 
+        self.flagforServerConnection=False#will be made false
+        self.flagForackcon=False
         
         while(True):
             
@@ -291,26 +289,45 @@ class Client:
                     self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
                     
                 elif(localInputData=="sendquestion" or localInputData=="CMD#?sendquestion"):
-                    self.terminal_printer("please enter your question:")
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
                     
-                    question=self.inputData
-                    self.inputData=""
-                    
-                    self.terminal_printer("Please enter your answer:")
-                    
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                    if(self.flagForackcon==True):
+                        self.terminal_printer("please enter your question:")
+                        while(self.inputData==""):
+                            time.sleep(0.0001)
                         
-                    answer=self.inputData
-                    self.inputData=""
-                    
-                    self.sendQuestionToServer(question, answer)
+                        question=self.inputData
+                        self.inputData=""
+                        
+                        self.terminal_printer("Please enter your answer:")
+                        
+                        while(self.inputData==""):
+                            time.sleep(0.0001)
+                            
+                        answer=self.inputData
+                        self.inputData=""
+                        
+                        self.sendQuestionToServer(question, answer)
+                    else:
+                        print("ERRROR: pub key not accepted yet")
+                
+                elif(localInputData=="comrequest" or localInputData=="CMD#?comrequest"):
+                    if(self.flagforServerConnection==True):
+                        
+                        key_phrase="fuck_you"
+                        message= "comrequest" + " <" + key_phrase + ">" + " <" + ((str(self.client_ip_address))) + ">"
+                         
+                        encmessage=self.encrypt_data_central_server(message.encode())
+                        
+                        self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
+                        
+                    else:
+                        print("can't start iniate process question not accepted yet")
+                           
                 else:
                     
                     if(self.communicationFlag==True):
                         self.sendMessage(localInputData)
+                    
                 
                 localInputData=""
                     
@@ -375,7 +392,11 @@ class Client:
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
                     self.terminal_printer("test encryption:")
                     self.terminal_printer(encmessage)
+                    self.flagForackcon=True
                     
+                elif("ackquestion" in localCentralData):
+                    print("your question has been accepted")
+                    self.flagforServerConnection=True  
                     
                 if(b"unameCS" in localCentralData):
                     self.terminal_printer("What's your name?")
