@@ -18,7 +18,8 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="10.182.149.209"
+
+    centralServerIp="192.168.4.24"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
