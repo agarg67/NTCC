@@ -286,7 +286,7 @@ class CentralServer:
                             elif question or answer not in self.questions_and_answer[addr[0].encode()]:
                                 self.questions_and_answer[addr[0].encode()] = [question, answer]
 
-                        print(b"THIS IS THE QUESTION RECEIVED:" + question + b"\nTHIS IS THE ANSWER RECEIVED:" + answer)
+                        print(b"THIS IS THE QUESTION RECEIVED:" + question + b" THIS IS THE ANSWER RECEIVED:" + answer)
 
                         message = (b"ackquestion" + b" <" + message_content + b"> <"
                                    + str(self.fetch_ip_address()).encode() + b">")
@@ -316,13 +316,82 @@ class CentralServer:
                             print(self.client_custom_names)
 
                     elif identifier_flag == b"comrequest":
-                        pass
+
+                        if message_content == b"client_server":
+
+                            if (len(self.client_custom_names.keys()) < 2) and (source_ip == message_sender):
+                                print("There is only one client to communicate")
+
+                                message = (b"comrequest <" + b"NO OTHER CLIENTS" + b"> <" + server_ip + b">")
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[source_ip])
+                                self.UDPserver.sendto(encrypted_message, addr)
+
+                            else:
+                                print("Client has requested to communicate with another client. Fetching active clients list:")
+
+                                listofnames = []
+
+
+                                for key in self.client_custom_names.keys():
+
+                                    print(self.client_custom_names[key])
+
+                                    if isinstance(self.client_custom_names[key], bytes):
+                                        client_name = self.client_custom_names[key].decode('utf-8')
+                                        listofnames.append(client_name)
+
+                                print(listofnames)
+
+                                temp = json.dumps(listofnames).encode('utf-8')
+
+                                print(temp)
+                                message = (b"comrequest <" + temp + b"> <" + server_ip + b">")
+
+                                print(message)
+
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[source_ip])
+                                self.UDPserver.sendto(encrypted_message, addr)
+
+
+
 
                     elif identifier_flag == b"answerquestion":
                         pass
 
                     elif identifier_flag == b"comrequest":
                         pass
+
+                    elif identifier_flag == b"sendpartnerserver":
+
+                        if (message_sender == source_ip):
+
+                            print(message_content)
+
+                            if (message_content in self.client_custom_names.values()):
+
+
+                                print("Client {} has sent the partner server IP: {}".format(message_sender, message_content))
+
+                                temp_key = None
+
+                                print(self.client_custom_names.keys())
+
+                                for key in self.client_custom_names.keys():
+                                    if self.client_custom_names[key] == message_content:
+                                        temp_key = key
+
+                                print(temp_key)
+                                client_ip = self.client_custom_names[temp_key]
+
+                                print(client_ip)
+
+                                message = (b"ackpartnerserver <" + self.questions_and_answer[client_ip] + b"> <" + server_ip + b">")
+
+                                print(message)
+
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[source_ip])
+                                self.UDPserver.sendto(encrypted_message, addr)
+
 
                     else:
                         print("Message not recognized")

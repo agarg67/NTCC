@@ -49,7 +49,7 @@ class Client:
     questionId=0
     messageId=0
     
-    communicationFlag=False
+    
     
     # init used to initialize the object
     def __init__(self, ipPass, portPass, portPass2): #self key word is needed as the first parameter in any function that belongs to the class and act opposite to this
@@ -167,8 +167,8 @@ class Client:
                 tempVar=json.loads(tempVar.decode())
             
             print(tempVar)
-            for i in range(len(tempVar)):
-                tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
+            # for i in range(len(tempVar)):
+            #     tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
             
             tempArr=[cmd, tempVar]
             
@@ -267,6 +267,7 @@ class Client:
         
         self.flagforServerConnection=False#will be made false
         self.flagForackcon=False
+        self.communicationFlag=False
         
         while(True):
             
