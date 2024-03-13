@@ -167,8 +167,8 @@ class Client:
                 tempVar=json.loads(tempVar.decode())
             
             print(tempVar)
-            for i in range(len(tempVar)):
-                tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
+            # for i in range(len(tempVar)):
+            #     tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
             
             tempArr=[cmd, tempVar]
             
