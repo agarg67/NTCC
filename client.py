@@ -19,7 +19,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.191.224"
+    centralServerIp="192.168.191.165"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -165,6 +165,8 @@ class Client:
             if(b"NO OTHER" not in tempVar):
                 #print(tempVar)
                 tempVar=json.loads(tempVar.decode())
+            else:
+                tempVar=tempVar.decode().strip()
             
             print(tempVar)
             # for i in range(len(tempVar)):
