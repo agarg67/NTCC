@@ -16,7 +16,7 @@ import json
 class Forwarder:
     centralServerIp = "192.168.0.128"
     centralPort = 20001
-    ip = '10.157.255.176'
+    ip = '192.168.191.165'
     noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
     noise = None
 
@@ -25,7 +25,7 @@ class Forwarder:
     bufferSize = 4096
     mainMsg = ""
     ipList = []
-    ranFlag = [False, False, False]
+    ranFlag = ["False", "False", "False"]
 
     centralKey = None
     clusterKeyList = []
@@ -172,7 +172,7 @@ class Forwarder:
         ###################
         print(temp)
         trueflag = random.randrange(len(self.ranFlag))
-        self.ranFlag[trueflag] = True
+        self.ranFlag[trueflag] = "True"
         print(self.ranFlag)
         message = b"destination <" + temp + b">" + b" <" + serverIP + b">"
         encryptMsg = rsa.encrypt(message, key)
@@ -188,8 +188,8 @@ class Forwarder:
 
 
     def forward_message(self, message, addr):
-        ip = self.get_local_ip()
-        fmessage = b"forwardedMessage" + b" <" + message + b">" + b"<" + ip + b">" + b"<" + self.ranFlag[0] + ">"
+        ip = self.get_local_ip().encode()
+        fmessage = b"forwardedMessage" + b" <" + message + b">" + b"<" + ip + b">" + b"<" + self.ranFlag[0].encode() + b">" 
         self.client.sendto(message,(self.ip, 1410))
 
     def get_local_ip(self): # this method is used to resolve your own ip address
@@ -210,6 +210,8 @@ class Forwarder:
         self.centralStartup()
         time.sleep(3)
         self.clusterInit()
+        time.sleep(3)
+        self.forward_message(b"hi", (self.ip, 3930))
         while True:
             try:
                 data, address = self.client.recvfrom(self.bufferSize)
