@@ -313,7 +313,7 @@ class Client:
                 elif(localInputData=="comrequest" or localInputData=="CMD#?comrequest"):
                     if(self.flagforServerConnection==True):
                         
-                        key_phrase="fuck_you"
+                        key_phrase="client_server"
                         message= "comrequest" + " <" + key_phrase + ">" + " <" + ((str(self.client_ip_address))) + ">"
                          
                         encmessage=self.encrypt_data_central_server(message.encode())
@@ -394,7 +394,7 @@ class Client:
                     self.terminal_printer(encmessage)
                     self.flagForackcon=True
                     
-                elif("ackquestion" in localCentralData):
+                elif(b"ackquestion" in localCentralData):
                     print("your question has been accepted")
                     self.flagforServerConnection=True  
                     
