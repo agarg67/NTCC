@@ -7,7 +7,7 @@ import random
 import threading
 import time
 import rsa
-
+import json
 
 # client class
 # contains bulk of the code for socket communication
@@ -19,7 +19,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.4.24"
+    centralServerIp="192.168.191.224"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -49,7 +49,7 @@ class Client:
     questionId=0
     messageId=0
     
-    communicationFlag=False
+    
     
     # init used to initialize the object
     def __init__(self, ipPass, portPass, portPass2): #self key word is needed as the first parameter in any function that belongs to the class and act opposite to this
@@ -161,8 +161,16 @@ class Client:
             tempArr[0]=tempArr[0].decode().strip()
             cmd=tempArr[0]
             tempVar=tempArr[1][0:len(tempArr[1])-1]
-            tempVar=tempVar.split(",")
             print(tempVar)
+            if(b"NO OTHER" not in tempVar):
+                #print(tempVar)
+                tempVar=json.loads(tempVar.decode())
+            else:
+                tempVar=tempVar.decode().strip()
+            
+            print(tempVar)
+            # for i in range(len(tempVar)):
+            #     tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
             
             tempArr=[cmd, tempVar]
             
@@ -195,7 +203,7 @@ class Client:
         
         
     def sendQuestionToServer(self, question, answer):
-        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
+        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + (str(self.client_ip_address)) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
         
         self.terminal_printer(message.encode())
         #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
@@ -212,8 +220,8 @@ class Client:
         self.messageId+=1
     
     def answerQuestion(self, qid, answer):
-        message="answerquestion" + " <" + str(qid) + ">" + " <" + answer + ">"
-        encmessage=self.encrypt_data_central_server(message.encode())
+        message="answerquestion" + " <" + answer + ">" + " <" + str(self.client_ip_address) +">"
+        encmessage=self.encrypt_data_central_server(message.encode()) 
         
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
@@ -259,10 +267,9 @@ class Client:
         
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
         
-        flagforServerConnection=True#will be made false
-        
-        while(flagforServerConnection==False):
-            time.sleep(0.00001)# will be changed 
+        self.flagforServerConnection=False#will be made false
+        self.flagForackcon=False
+        self.communicationFlag=False
         
         while(True):
             
@@ -291,26 +298,45 @@ class Client:
                     self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
                     
                 elif(localInputData=="sendquestion" or localInputData=="CMD#?sendquestion"):
-                    self.terminal_printer("please enter your question:")
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
                     
-                    question=self.inputData
-                    self.inputData=""
-                    
-                    self.terminal_printer("Please enter your answer:")
-                    
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                    if(self.flagForackcon==True):
+                        self.terminal_printer("please enter your question:")
+                        while(self.inputData==""):
+                            time.sleep(0.0001)
                         
-                    answer=self.inputData
-                    self.inputData=""
-                    
-                    self.sendQuestionToServer(question, answer)
+                        question=self.inputData
+                        self.inputData=""
+                        
+                        self.terminal_printer("Please enter your answer:")
+                        
+                        while(self.inputData==""):
+                            time.sleep(0.0001)
+                            
+                        answer=self.inputData
+                        self.inputData=""
+                        
+                        self.sendQuestionToServer(question, answer)
+                    else:
+                        print("ERRROR: pub key not accepted yet")
+                
+                elif(localInputData=="comrequest" or localInputData=="CMD#?comrequest"):
+                    if(self.flagforServerConnection==True):
+                        
+                        key_phrase="client_server"
+                        message= "comrequest" + " <" + key_phrase + ">" + " <" + ((str(self.client_ip_address))) + ">"
+                         
+                        encmessage=self.encrypt_data_central_server(message.encode())
+                        
+                        self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
+                        
+                    else:
+                        print("can't start iniate process question not accepted yet")
+                           
                 else:
                     
                     if(self.communicationFlag==True):
                         self.sendMessage(localInputData)
+                    
                 
                 localInputData=""
                     
@@ -375,7 +401,11 @@ class Client:
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
                     self.terminal_printer("test encryption:")
                     self.terminal_printer(encmessage)
+                    self.flagForackcon=True
                     
+                elif(b"ackquestion" in localCentralData):
+                    print("your question has been accepted")
+                    self.flagforServerConnection=True  
                     
                 if(b"unameCS" in localCentralData):
                     self.terminal_printer("What's your name?")
@@ -406,42 +436,49 @@ class Client:
                     partnerName=""
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     
-                    nameArray=parsedMessage[1]
-                    
-                    for i in nameArray:
-                        print(i)
+                    if("NO OTHER" not in parsedMessage[1]):
+                        nameArray=parsedMessage[1]
                         
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
-                    
-                    partnerName=self.inputData
-                    self.inputData=""
-                    
-                    partnerName=partnerName.strip()
-                    print(partnerName)
-                    
-                    while(partnerName not in nameArray):
-                        print("name not present, please choose again")
+                        for i in nameArray:
+                            print(i)
+                            
                         while(self.inputData==""):
                             time.sleep(0.0001)
-                    
+                        
                         partnerName=self.inputData
                         self.inputData=""
-                    
+                        
                         partnerName=partnerName.strip()
                         print(partnerName)
                         
-                    message= "sendpartnerserver " + "<" + partnerName +">"
-                    enc=self.encrypt_data_central_server(message.encode())
-                    
-                    self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                        while(partnerName not in nameArray):
+                            print("name not present, please choose again")
+                            while(self.inputData==""):
+                                time.sleep(0.0001)
+                        
+                            partnerName=self.inputData
+                            self.inputData=""
+                        
+                            partnerName=partnerName.strip()
+                            print(partnerName)
+                            
+                        message= "sendpartnerserver " + "<" + partnerName +">" + " <" + (str(self.client_ip_address))+">"
+                        enc=self.encrypt_data_central_server(message.encode())
+                        
+                        self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                    else:
+                        print("no other client right now please try in some time")
                     
                     
                 if(b"sendquestion" in localCentralData):
                     
                     questionAnswer=""
-                    parsedMessage= self.parseIncomingMessage(localCentralData.decode())
-                    self.terminal_printer(parsedMessage[2])
+                    parsedMessage= self.parseIncomingMessage(localCentralData)
+                    questionToAnswer=parsedMessage[2]
+                    questionToAnswer=questionToAnswer[:len(questionToAnswer)-1].decode()
+                    #print("hi")
+                    self.terminal_printer(questionToAnswer)
+                    #self.terminal_printer(parsedMessage[2])
                     
                     while(self.inputData==""):
                         time.sleep(0.0001)
@@ -449,32 +486,35 @@ class Client:
                     questionAnswer=self.inputData
                     self.inputData=""
                     
-                    self.answerQuestion(parsedMessage[1], questionAnswer)
+                    questionAnswer=questionAnswer.strip()
+                    qid=parsedMessage[1]
+                    qid=qid[:len(qid)-1].decode()
+                    self.answerQuestion(qid, questionAnswer)
                     
-                if(b"answerquestion" in localCentralData):
-                    acceptOrReject="No"
+                # if(b"answerquestion" in localCentralData):
+                #     acceptOrReject="No"
                     
-                    parsedMessage = self.parseIncomingMessage(localCentralData)
+                #     parsedMessage = self.parseIncomingMessage(localCentralData)
                     
-                    self.terminal_printer("Recieved the following answer:")
-                    self.terminal_printer(parsedMessage[2])
-                    self.terminal_printer("reply yes to accept, reply with anything else to reject")
+                #     self.terminal_printer("Recieved the following answer:")
+                #     self.terminal_printer(parsedMessage[2])
+                #     self.terminal_printer("reply yes to accept, reply with anything else to reject")
                     
-                    questionAnswer=""
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                #     questionAnswer=""
+                #     while(self.inputData==""):
+                #         time.sleep(0.0001)
                     
-                    questionAnswer=self.inputData
-                    self.inputData=""
+                #     questionAnswer=self.inputData
+                #     self.inputData=""
                     
-                    replytoSend=""
+                #     replytoSend=""
                     
-                    if("yes" in questionAnswer.lower()):
-                        replytoSend="ackanswer" + " <" + str(parsedMessage[1]) + ">"
-                    else:
-                        replytoSend="nakanswer" + " <" + str(parsedMessage[1]) + ">"
+                #     if("yes" in questionAnswer.lower()):
+                #         replytoSend="ackanswer" + " <" + str(parsedMessage[1]) + ">"
+                #     else:
+                #         replytoSend="nakanswer" + " <" + str(parsedMessage[1]) + ">"
                     
-                    self.UDPClientCentralSocket.sendto(replytoSend.encode(),(self.centralServerIp, self.centralServerPort))
+                #     self.UDPClientCentralSocket.sendto(replytoSend.encode(),(self.centralServerIp, self.centralServerPort))
                     
                 if(b"ackanswer" in localCentralData):
                     self.terminal_printer("Your Answer has been accepted, we will move forward with completing the connection!")

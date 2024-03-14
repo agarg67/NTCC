@@ -9,7 +9,6 @@ import threading
 import time
 import rsa
 import time
-
 import json
 
 
@@ -17,8 +16,8 @@ import json
 class Forwarder:
     centralServerIp = "192.168.0.128"
     centralPort = 20001
-
-    noiseList = [("192.168.0.128", 1410), ("192.168.0.128", 3784), ("192.168.0.128", 8473)]
+    ip = '10.157.255.176'
+    noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
     noise = None
 
     server=""
@@ -26,7 +25,7 @@ class Forwarder:
     bufferSize = 4096
     mainMsg = ""
     ipList = []
-    ranFlag = [False, False, False]
+    ranFlag = ["False", "False", "False"]
 
     centralKey = None
     clusterKeyList = []
@@ -45,15 +44,6 @@ class Forwarder:
 
         self.client = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM, proto=socket.IPPROTO_UDP)
         self.client.bind(('', self.serverport))
-
-        '''self.threadInput = threading.Thread(target=self.getserver_input)
-        self.threadInput.daemon = True
-        self.threadInput.start()'''
-
-    def getserver_input(self):
-        while True:
-            data, addr = self.client.recvfrom(self.bufferSize)
-            self.parse_message(data, addr)
 
     def message_identifier(self, data):
         message_identifier = data.split(b" <")
@@ -80,7 +70,7 @@ class Forwarder:
 
         identifier_flag = None
 
-        if (b"ackforwarder" in data) or (b"ackcluster" in data):
+        if (b"ackforwarder" in data) or (b"ackcluster" in data) or (b"sendMessage"):
             identifier_flag = self.message_identifier(data)
             message_content = self.main_message(data)
             message_sender = self.message_sender(data)
@@ -95,7 +85,6 @@ class Forwarder:
             encrypted_message = rsa.encrypt(message, self.centralKey)
             print(encrypted_message)
 
-            self.client.sendto(encrypted_message, addr)
         elif identifier_flag == b"ackcluster":    
             
             self.clusterkey = rsa.PublicKey.load_pkcs1(message_content.decode())
@@ -109,6 +98,11 @@ class Forwarder:
                 self.clusterkey3 = self.clusterkey
                 print(3)
             self.clusterSend(self.clusterkey, addr)
+            #self.forward_message(b"hi", (self.ip, 3930)) #temporary spot for function call.
+
+        elif identifier_flag == b"sendMessage":
+            print("forwarding")
+            self.forward_message(message_content, message_sender)
             
 
         else:
@@ -162,8 +156,10 @@ class Forwarder:
     #Ip Map
     ################################################################################################################################
     def ipMap(self, ips):
-        ipList = []
-        ipList = ips
+        if self.ipList is not None:
+            self.ipList = self.ipList +  ip
+        else:
+            self.ipList = ip
         print(ipList[0])
 
     def clusterInit(self):
@@ -182,11 +178,12 @@ class Forwarder:
         temp = json.dumps(("111.111.111.111", 9999)).encode('utf-8')
         ###################
         print(temp)
+        trueflag = random.randrange(len(self.ranFlag))
+        self.ranFlag[trueflag] = "True"
+        print(self.ranFlag)
         message = b"destination <" + temp + b">" + b" <" + serverIP + b">"
-        i = 0
         encryptMsg = rsa.encrypt(message, key)
         print(encryptMsg)
-
         self.client.sendto(encryptMsg, addr)
 
 
@@ -194,16 +191,13 @@ class Forwarder:
     #Forward Client Messages
     ################################################################################################################################
 
-    """def getClient_input(self):
-        while True:
-            data, addr = self.client.recvfrom(self.bufferSize)
-            self.receive_message(data, addr)"""
 
 
-    def receive_message(self, message, addr):
-        mainMsg = message
-        print(addr)
-        self.client.sendto(message,("192.168.0.128", 1410))
+
+    def forward_message(self, message, addr):
+        ip = self.get_local_ip().encode()
+        fmessage = b"forwardedMessage" + b" <" + message + b">" + b" <" + ip + b">" + b" <" + self.ranFlag[0].encode() + b">" 
+        self.client.sendto(fmessage,(self.ip, 1410))
 
     def get_local_ip(self): # this method is used to resolve your own ip address
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -223,6 +217,7 @@ class Forwarder:
         self.centralStartup()
         time.sleep(3)
         self.clusterInit()
+        time.sleep(3)
         while True:
             try:
                 data, address = self.client.recvfrom(self.bufferSize)

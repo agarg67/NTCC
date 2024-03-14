@@ -28,11 +28,12 @@ class UDPServerSocketManager:
 class ipMapper_manager:
     def __init__(self):
         # This will be a list of the IP addresses of the servers
-        self.server_ips = ["123.412.321", "123.123.123", "123.123.123"]
-
+        self.server_ips = []
     def __enter__(self):
-        #self.server_ips.append()
-        pass
+        return self.server_ips
+
+    def add_IP_addr(self, ip_addr):
+        self.server_ips.append(ip_addr)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
@@ -49,6 +50,7 @@ class CentralServer:
         self.client_custom_names = {}
         self.received_messages = {}
         self.questions_and_answer = {}
+        self.clients_com = {}
         self.threadUDPserver = None
 
         # forwarder information
@@ -118,10 +120,15 @@ class CentralServer:
         message_sender[2] = message_sender[2].replace(b">", b"")
         return message_sender[2]
 
-    def additional_message_editor(self, data):
+    def addtional_question_editor(self, data):
         additional_message = data.split(b" <")
         additional_message[3] = additional_message[3].replace(b">", b"")
         return additional_message[3]
+
+    def addtional_answer_editor(self, data):
+        additional_message = data.split(b" <")
+        additional_message[4] = additional_message[4].replace(b">", b"")
+        return additional_message[4]
 
 
     # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
@@ -153,6 +160,10 @@ class CentralServer:
         return decrypted_message
 
     ## Apparently only the sendpubip and forwarder messages will be unecrypted, everything else will be assumed encrypted ##
+
+    ## TO DO : NEED TO ADD FLAGS IN ORDER FOR THE CLIENT TO FOLLOW THE PROTOCOLS ##
+
+
     def parse_message(self, data, addr):
 
         print("This is the data received: {}".format(data))
@@ -162,6 +173,14 @@ class CentralServer:
         source_ip = addr[0].encode()
         pem = self.rsaPublicKey.save_pkcs1()
         server_ip = self.fetch_ip_address().encode()
+        initiate_communication = False
+        other_client = None
+
+        print(self.clients_com)
+
+        #if not self.clients_com:
+        #    other_client = self.clients_com[addr][0]
+        #    initiate_communication = True
 
         if (b"sendpubip" in data) or (b"forwarder" in data):
             identifier_flag = self.message_identifier(data)
@@ -174,8 +193,10 @@ class CentralServer:
 
             # Need the address to be in bytes in order to be compared with the message_sender
             if source_ip == message_sender:
-                if message_sender not in self.active_clients_and_keys:
-                    self.active_clients_and_keys.setdefault(message_sender, client_public_key)
+
+                if addr not in self.active_clients_and_keys:
+
+                    self.active_clients_and_keys.setdefault(addr, client_public_key)
                     message = (b"ackcon <" + pem + b"> <" + server_ip + b">")
 
                     encrypted_message = self.split_and_encrypt(message, client_public_key)
@@ -190,8 +211,8 @@ class CentralServer:
                     self.UDPserver.sendto(encrypted_message, addr)
 
                 # Updates a client's public key if the client is already in the dictionary
-                elif message_sender in self.active_clients_and_keys:
-                    self.active_clients_and_keys[message_sender] = client_public_key
+                elif addr in self.active_clients_and_keys:
+                    self.active_clients_and_keys[addr] = client_public_key
                     message = (b"ackcon <" + pem + b"> <" + server_ip + b">")
 
                     encrypted_message = self.split_and_encrypt(message, client_public_key)
@@ -199,7 +220,6 @@ class CentralServer:
                     self.UDPserver.sendto(encrypted_message, addr)
 
                     time.sleep(0.5)
-
 
                     # Proceeds then to ask the custom name for the client
                     message = (b"unameCS <" + str(addr).encode() + b"> <" + server_ip + b">")
@@ -241,8 +261,8 @@ class CentralServer:
 
                         if (message_content == key_phrase) and (source_ip == message_sender):
 
-                            #temp = json.dumps(server_ips).encode('utf-8')
-                            #print(temp)
+                            # temp = json.dumps(server_ips).encode('utf-8')
+                            # print(temp)
 
                             temp = json.dumps(ip_map.server_ips).encode('utf-8')
                             print(temp)
@@ -251,16 +271,16 @@ class CentralServer:
                             print(message)
 
                             encrypted_message = self.split_and_encrypt(message, self.forwarderPublicKey)
-                            #encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
+                            # encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
                             print(encrypted_message)
 
                             self.UDPserver.sendto(encrypted_message, addr)
                         else:
                             print("Forwarder has sent an incorrect key phrase or IP address")
 
-            elif source_ip in self.active_clients_and_keys:
+            elif addr in self.active_clients_and_keys:
 
-                if not self.active_clients_and_keys[source_ip]:
+                if not self.active_clients_and_keys[addr]:
                     print("Client {} has not sent their public key".format(addr))
                 else:
 
@@ -273,56 +293,193 @@ class CentralServer:
 
                     if identifier_flag == b"sendquestion":
 
-                        question = message_sender
-                        answer = self.additional_message_editor(decrypted_message)
+                        question = None
+                        answer = None
 
-                        if not self.questions_and_answer:
-                            self.questions_and_answer.setdefault(addr, [question, answer])
-                        elif source_ip in self.questions_and_answer:
+                        if (message_sender == source_ip) and (addr in self.active_clients_and_keys):
 
-                            if self.questions_and_answer[addr[0].encode()] != [question, answer]:
-                                self.questions_and_answer[addr[0].encode()] = [question, answer]
-                            # Probably redundant
-                            elif question or answer not in self.questions_and_answer[addr[0].encode()]:
-                                self.questions_and_answer[addr[0].encode()] = [question, answer]
+                            ack_question = False
+                            question = self.addtional_question_editor(decrypted_message)
+                            answer = self.addtional_answer_editor(decrypted_message)
 
-                        print(b"THIS IS THE QUESTION RECEIVED:" + question + b"\nTHIS IS THE ANSWER RECEIVED:" + answer)
+                            if not self.questions_and_answer:
+                                self.questions_and_answer.setdefault(addr, [question, answer, message_content])
+                                ack_question = True
 
-                        message = (b"ackquestion" + b" <" + message_content + b"> <"
-                                   + str(self.fetch_ip_address()).encode() + b">")
+                            elif addr not in self.questions_and_answer:
+                                self.questions_and_answer.setdefault(addr, [question, answer, message_content])
+                                ack_question = True
 
-                        print(message)
+                            elif addr in self.questions_and_answer:
+                                self.questions_and_answer[addr] = [question, answer, message_content]
+                                ack_question = True
+                            else:
+                                print("Error with adding the question and answer to the dictionary.")
 
-                        encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[source_ip])
+                            if ack_question:
+                                print(b"THIS IS THE QUESTION RECEIVED:" + question)
+                                print(b"THIS IS THE ANSWER RECEIVED:" + answer)
 
-                        print(encrypted_message)
+                                message = (b"ackquestion" + b" <" + message_content + b"> <"
+                                           + str(self.fetch_ip_address()).encode() + b">")
 
-                        self.UDPserver.sendto(encrypted_message, addr)
+                                print(message)
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                print(encrypted_message)
+                                self.UDPserver.sendto(encrypted_message, addr)
+                        else:
+                            print("Failed: Client {} is not in the active clients list".format(addr))
+
+
+
+
 
                     elif identifier_flag == b"sendnameserver":
 
-                        if (source_ip in self.active_clients_and_keys) and (message_sender == source_ip):
+                        if (addr in self.active_clients_and_keys) and (message_sender == source_ip):
 
                             print("Client {} has sent their custom name: {}".format(message_sender, message_content))
                             if not self.client_custom_names:
-                                self.client_custom_names.setdefault(message_sender, message_content)
+                                self.client_custom_names.setdefault(addr, message_content)
                             elif message_sender not in self.client_custom_names:
-                                self.client_custom_names.setdefault(message_sender, message_content)
+                                self.client_custom_names.setdefault(addr, message_content)
                             elif message_sender in self.client_custom_names:
-                                self.client_custom_names[message_sender] = message_content
+                                self.client_custom_names[addr] = message_content
                             else:
                                 print("Error: Custom name not added to the dictionary")
 
                             print(self.client_custom_names)
 
                     elif identifier_flag == b"comrequest":
-                        pass
+
+                        if message_content == b"client_server":
+
+                            # Purely for testing purposes
+                            #self.client_custom_names.setdefault(('123.123.123.123', 29314), b"CRA##Z")
+                            #self.questions_and_answer.setdefault(('123.123.123.123', 29314), [b"Question", b"Answer"])
+
+                            if (len(self.client_custom_names.keys()) < 2) and (source_ip == message_sender):
+                                print("There is only one client to communicate")
+
+                                message = (b"comrequest <" + b"NO OTHER CLIENTS" + b"> <" + server_ip + b">")
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                self.UDPserver.sendto(encrypted_message, addr)
+
+                            else:
+                                print(
+                                    "Client has requested to communicate with another client. Fetching active clients list:")
+
+                                listofnames = []
+
+                                for key in self.client_custom_names.keys():
+
+                                    if key != addr:
+                                        if isinstance(self.client_custom_names[key], bytes):
+                                            client_name = self.client_custom_names[key].decode('utf-8')
+                                            listofnames.append(client_name)
+
+                                print(listofnames)
+
+                                temp = json.dumps(listofnames).encode('utf-8')
+
+                                print(temp)
+                                message = (b"comrequest <" + temp + b"> <" + server_ip + b">")
+
+                                print(message)
+
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                self.UDPserver.sendto(encrypted_message, addr)
+
+
+                    elif identifier_flag == b"sendpartnerserver":
+
+                        if (message_sender == source_ip):
+
+                            print(message_content)
+
+                            if (message_content in self.client_custom_names.values()):
+
+                                print("Client {} has sent the partner server IP: {}".format(message_sender,
+                                                                                            message_content))
+
+                                # Purely for testing purposes
+                                # self.client_custom_names.setdefault(('123.123.123.123', 29314), b"CRA##Z")
+
+                                temp_key = None
+
+                                print(self.client_custom_names.keys())
+
+                                for key in self.client_custom_names.keys():
+                                    if self.client_custom_names[key] == message_content:
+                                        temp_key = key
+
+                                if temp_key is not None:
+                                    message = (b"sendquestion <" + self.questions_and_answer[temp_key][2] + b"> <" +
+                                        self.questions_and_answer[temp_key][0] + b"> <" + server_ip + b">")
+
+                                    message2 = (b"sendquestion <" + self.questions_and_answer[addr][2] + b"> <" +
+                                               self.questions_and_answer[addr][0] + b"> <" + server_ip + b">")
+
+                                    self.clients_com.setdefault(addr, [temp_key, False])
+                                    self.clients_com.setdefault(temp_key, [addr, False])
+
+                                    encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                    encrypted_message2 = self.split_and_encrypt(message2, self.active_clients_and_keys[temp_key])
+
+                                    self.UDPserver.sendto(encrypted_message, addr)
+                                    self.UDPserver.sendto(encrypted_message2, temp_key)
+
 
                     elif identifier_flag == b"answerquestion":
-                        pass
 
-                    elif identifier_flag == b"comrequest":
-                        pass
+                        if (addr in self.active_clients_and_keys) and (message_sender == source_ip):
+
+                            print(identifier_flag)
+                            print(message_content)
+
+                            required_answer = self.questions_and_answer[self.clients_com[addr][0]][1]
+                            print(required_answer)
+
+                            if (message_content == self.questions_and_answer[self.clients_com[addr][0]][1]):
+                                print("Client {} has answered the question correctly".format(message_sender))
+                                self.clients_com[addr][1] = True
+
+                                message = (b"ackanswer <" + b"Correct" + b"> <" + server_ip + b">")
+
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                self.UDPserver.sendto(encrypted_message, addr)
+                            else:
+                                message = (b"nakanswer <" + b"Correct" + b"> <" + server_ip + b">")
+
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                self.UDPserver.sendto(encrypted_message, addr)
+
+                    elif initiate_communication and (self.clients_com[addr][1] and
+                                                     self.clients_com[self.clients_com[other_client][1]]):
+
+                        ip_map = ipMapper_manager()
+                        ip_map.add_IP_addr(addr)
+                        ip_map.add_IP_addr(other_client)
+
+                        print("Both clients have answered the question correctly, initiating communication")
+
+                        first_client_pub_key = self.active_clients_and_keys[addr].save_pkcs1()
+                        second_client_pub_key = self.active_clients_and_keys[other_client].save_pkcs1()
+
+                        message = (b"cominitiate" + b"<" + first_client_pub_key + b"> <" + server_ip + b">")
+                        message2 = (b"cominitiate" + b"<" + second_client_pub_key + b"> <" + server_ip + b">")
+
+                        encrypted_message = self.split_and_encrypt(message, self.forwarderPublicKey)
+                        encrypted_message2 = self.split_and_encrypt(message2, self.forwarderPublicKey)
+
+                        self.UDPserver.sendto(encrypted_message2, addr)
+                        self.UDPserver.sendto(encrypted_message, other_client)
+
+                        #message = (b"sendip")
+
+
+
+
 
                     else:
                         print("Message not recognized")
@@ -381,9 +538,7 @@ class CentralServer:
             pass
         """
 
-
         message_identifier = data.split(b" <")
-
 
         if message_identifier[0] == b"sendpubip":
             pass
@@ -403,7 +558,7 @@ class CentralServer:
             print("Client has requested to communicate with another client. Fetching active clients list:")
             print(self.active_clients[:])
         else:
-            #print("Message not recognized")
+            # print("Message not recognized")
             return None
 
     def initiate_communication(self, data, addr):
