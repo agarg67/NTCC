@@ -474,7 +474,11 @@ class Client:
                     
                     questionAnswer=""
                     parsedMessage= self.parseIncomingMessage(localCentralData)
-                    self.terminal_printer(parsedMessage[2])
+                    questionToAnswer=parsedMessage[2]
+                    questionToAnswer=questionToAnswer[:len(questionToAnswer)-1].decode()
+                    #print("hi")
+                    self.terminal_printer(questionToAnswer)
+                    #self.terminal_printer(parsedMessage[2])
                     
                     while(self.inputData==""):
                         time.sleep(0.0001)
@@ -490,9 +494,7 @@ class Client:
                     parsedMessage = self.parseIncomingMessage(localCentralData)
                     
                     self.terminal_printer("Recieved the following answer:")
-                    questionToAnswer=parsedMessage[2]
-                    questionToAnswer=questionToAnswer[:len(questionToAnswer)-1].decode()
-                    self.terminal_printer(questionToAnswer)
+                    self.terminal_printer(parsedMessage[2])
                     self.terminal_printer("reply yes to accept, reply with anything else to reject")
                     
                     questionAnswer=""
