@@ -478,7 +478,7 @@ class Client:
                     questionToAnswer=questionToAnswer[:len(questionToAnswer)-1].decode()
                     #print("hi")
                     self.terminal_printer(questionToAnswer)
-                    self.terminal_printer(parsedMessage[2])
+                    #self.terminal_printer(parsedMessage[2])
                     
                     while(self.inputData==""):
                         time.sleep(0.0001)
