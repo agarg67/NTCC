@@ -46,6 +46,11 @@ class Noise:
         pubkey = self.publicKey.save_pkcs1()
         source = addr[0].encode()
 
+    def flag(self, data):
+        flag = data.split(b" <")
+        flag[3] = flag[3].replace(b">", b"")
+        return flag[3]
+
         print("This is the data received: {}".format(data))
         print("\nThis is the data received from: {}".format(addr))
 
