@@ -160,6 +160,10 @@ class CentralServer:
         return decrypted_message
 
     ## Apparently only the sendpubip and forwarder messages will be unecrypted, everything else will be assumed encrypted ##
+
+    ## TO DO : NEED TO ADD FLAGS IN ORDER FOR THE CLIENT TO FOLLOW THE PROTOCOLS ##
+
+
     def parse_message(self, data, addr):
 
         print("This is the data received: {}".format(data))
@@ -351,8 +355,8 @@ class CentralServer:
                         if message_content == b"client_server":
 
                             # Purely for testing purposes
-                            self.client_custom_names.setdefault(('123.123.123.123', 29314), b"CRA##Z")
-                            self.questions_and_answer.setdefault(('123.123.123.123', 29314), [b"Question", b"Answer"])
+                            #self.client_custom_names.setdefault(('123.123.123.123', 29314), b"CRA##Z")
+                            #self.questions_and_answer.setdefault(('123.123.123.123', 29314), [b"Question", b"Answer"])
 
                             if (len(self.client_custom_names.keys()) < 2) and (source_ip == message_sender):
                                 print("There is only one client to communicate")
@@ -399,7 +403,7 @@ class CentralServer:
                                                                                             message_content))
 
                                 # Purely for testing purposes
-                                self.client_custom_names.setdefault(('123.123.123.123', 29314), b"CRA##Z")
+                                # self.client_custom_names.setdefault(('123.123.123.123', 29314), b"CRA##Z")
 
                                 temp_key = None
 
@@ -410,14 +414,14 @@ class CentralServer:
                                         temp_key = key
 
                                 if temp_key is not None:
-                                    message = (b"ackpartnerserver <" + self.questions_and_answer[temp_key][0] +
-                                               b"> <" + server_ip + b">")
+                                    message = (b"sendquestion <" + self.questions_and_answer[temp_key][2] + b"> <" +
+                                        self.questions_and_answer[temp_key][0] + b"> <" + server_ip + b">")
 
-                                    message2 = (b"ackpartnerserver <" + self.questions_and_answer[addr][0] +
-                                               b"> <" + server_ip + b">")
+                                    message2 = (b"sendquestion <" + self.questions_and_answer[addr][2] + b"> <" +
+                                               self.questions_and_answer[addr][0] + b"> <" + server_ip + b">")
 
                                     self.clients_com.setdefault(addr, [temp_key, False])
-                                    self.cliens_com.setdefault(temp_key, [addr, False])
+                                    self.clients_com.setdefault(temp_key, [addr, False])
 
                                     encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
                                     encrypted_message2 = self.split_and_encrypt(message2, self.active_clients_and_keys[temp_key])
@@ -430,9 +434,25 @@ class CentralServer:
 
                         if (addr in self.active_clients_and_keys) and (message_sender == source_ip):
 
-                            if (message_content == self.questions_and_answer[self.clients_com[addr][0]][0]):
+                            print(identifier_flag)
+                            print(message_content)
+
+                            required_answer = self.questions_and_answer[self.clients_com[addr][0]][1]
+                            print(required_answer)
+
+                            if (message_content == self.questions_and_answer[self.clients_com[addr][0]][1]):
                                 print("Client {} has answered the question correctly".format(message_sender))
                                 self.clients_com[addr][1] = True
+
+                                message = (b"ackanswer <" + b"Correct" + b"> <" + server_ip + b">")
+
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                self.UDPserver.sendto(encrypted_message, addr)
+                            else:
+                                message = (b"nakanswer <" + b"Correct" + b"> <" + server_ip + b">")
+
+                                encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
+                                self.UDPserver.sendto(encrypted_message, addr)
 
                     elif initiate_communication and (self.clients_com[addr][1] and
                                                      self.clients_com[self.clients_com[other_client][1]]):
