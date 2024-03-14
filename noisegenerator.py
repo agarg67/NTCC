@@ -41,15 +41,28 @@ class Noise:
         message_sender[2] = message_sender[2].replace(b">", b"")
         return message_sender[2]
 
+    def flag(self, data):
+        flag = data.split(b" <")
+        flag[3] = flag[3].replace(b">", b"")
+        return flag[3]
+
     def parse_message(self, data, addr):
+
         serverIP = self.get_local_ip().encode()
         pubkey = self.publicKey.save_pkcs1()
         source = addr[0].encode()
 
         print("This is the data received: {}".format(data))
         print("\nThis is the data received from: {}".format(addr))
-
         identifier_flag = None
+
+        if(b"forwardedMessage" in data):
+            identifier_flag = self.message_identifier(data)
+            print(identifier_flag)
+            message_content = self.main_message(data)
+            message_sender = self.message_sender(data)
+            flag = self.flag(data)
+
 
         if(b"cluster" in data):
             identifier_flag = self.message_identifier(data)
@@ -62,6 +75,10 @@ class Noise:
 
             message = (b"ackcluster <" + pubkey + b"> <" + serverIP + b">")
             self.UDPserver.sendto(message, addr)
+
+        elif identifier_flag == b"forwardedMessage":
+            print("it works")
+            print(message_content)
 
         else:
             # possibly encrypted message which needs to be decrypted
