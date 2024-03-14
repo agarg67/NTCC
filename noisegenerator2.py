@@ -56,6 +56,13 @@ class Noise:
 
         identifier_flag = None
 
+        if(b"forwardedMessage" in data):
+            identifier_flag = self.message_identifier(data)
+            print(identifier_flag)
+            message_content = self.main_message(data)
+            message_sender = self.message_sender(data)
+            flag = self.flag(data)
+
         if(b"cluster" in data):
             identifier_flag = self.message_identifier(data)
             message_content = self.main_message(data)
@@ -63,10 +70,15 @@ class Noise:
 
         if identifier_flag == b"cluster":
             self.forwarderPublicKey = rsa.PublicKey.load_pkcs1(message_content.decode())
+            print(self.publicKey)
 
             message = (b"ackcluster <" + pubkey + b"> <" + serverIP + b">")
             self.UDPserver.sendto(message, addr)
 
+        elif identifier_flag == b"forwardedMessage":
+            print("it works")
+            print(message_content)
+            
         else:
             # possibly encrypted message which needs to be decrypted
             ciphertext = data

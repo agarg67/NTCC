@@ -70,7 +70,7 @@ class Forwarder:
 
         identifier_flag = None
 
-        if (b"ackforwarder" in data) or (b"ackcluster" in data):
+        if (b"ackforwarder" in data) or (b"ackcluster" in data) or (b"sendMessage"):
             identifier_flag = self.message_identifier(data)
             message_content = self.main_message(data)
             message_sender = self.message_sender(data)
@@ -85,7 +85,6 @@ class Forwarder:
             encrypted_message = rsa.encrypt(message, self.centralKey)
             print(encrypted_message)
 
-            self.client.sendto(encrypted_message, addr)
         elif identifier_flag == b"ackcluster":    
             
             self.clusterkey = rsa.PublicKey.load_pkcs1(message_content.decode())
@@ -100,6 +99,10 @@ class Forwarder:
                 print(3)
             self.clusterSend(self.clusterkey, addr)
             #self.forward_message(b"hi", (self.ip, 3930)) #temporary spot for function call.
+
+        elif identifier_flag == b"sendMessage":
+            print("forwarding")
+            self.forward_message(message_content, message_sender)
             
 
         else:
@@ -153,7 +156,10 @@ class Forwarder:
     #Ip Map
     ################################################################################################################################
     def ipMap(self, ips):
-        self.ipList = ips
+        if self.ipList is not None:
+            self.ipList = self.ipList +  ip
+        else:
+            self.ipList = ip
         print(ipList[0])
 
     def clusterInit(self):
