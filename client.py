@@ -18,7 +18,8 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="10.155.131.118"
+
+    centralServerIp="192.168.4.24"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -395,7 +396,7 @@ class Client:
                             nameFlag=True
                     
                     name=name[0:3] + "##" + name[3:]
-                    message= "sendnameserver " + "<" + name +">"
+                    message= "sendnameserver " + "<" + name +">" + " <" + (str(self.client_ip_address)) + ">"
                     enc=self.encrypt_data_central_server(message.encode())
                     
                     self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))

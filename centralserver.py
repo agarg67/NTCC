@@ -46,6 +46,7 @@ class CentralServer:
         self.localPort = 20001
         self.bufferSize = 128000
         self.active_clients_and_keys = {}
+        self.client_custom_names = {}
         self.received_messages = {}
         self.questions_and_answer = {}
         self.threadUDPserver = None
@@ -177,20 +178,15 @@ class CentralServer:
                     self.active_clients_and_keys.setdefault(message_sender, client_public_key)
                     message = (b"ackcon <" + pem + b"> <" + server_ip + b">")
 
-                    temp_message = []
-                    temp_message.append(message[0:245])
-                    temp_message.append(message[245:])
-
-                    #print(temp_message)
-
-                    #print(len(message))
-
-                    #message = b"hey"
-                    #encrypted_message = rsa.encrypt(temp_message[0], client_public_key)
-                    #encrypted_message2 = rsa.encrypt(temp_message[1], client_public_key)
-                    #print(len(encrypted_message + encrypted_message2))
                     encrypted_message = self.split_and_encrypt(message, client_public_key)
 
+                    self.UDPserver.sendto(encrypted_message, addr)
+
+                    time.sleep(0.5)
+
+                    # Proceeds then to ask the custom name for the client
+                    message = (b"unameCS <" + str(addr).encode() + b"> <" + server_ip + b">")
+                    encrypted_message = self.split_and_encrypt(message, client_public_key)
                     self.UDPserver.sendto(encrypted_message, addr)
 
                 # Updates a client's public key if the client is already in the dictionary
@@ -200,6 +196,14 @@ class CentralServer:
 
                     encrypted_message = self.split_and_encrypt(message, client_public_key)
 
+                    self.UDPserver.sendto(encrypted_message, addr)
+
+                    time.sleep(0.5)
+
+
+                    # Proceeds then to ask the custom name for the client
+                    message = (b"unameCS <" + str(addr).encode() + b"> <" + server_ip + b">")
+                    encrypted_message = self.split_and_encrypt(message, client_public_key)
                     self.UDPserver.sendto(encrypted_message, addr)
             else:
                 print("Connection denied {} due to wrong IP address in the message {}".format(addr, message_sender))
@@ -295,6 +299,41 @@ class CentralServer:
 
                         self.UDPserver.sendto(encrypted_message, addr)
 
+                    elif identifier_flag == b"sendnameserver":
+
+                        if (source_ip in self.active_clients_and_keys) and (message_sender == source_ip):
+
+                            print("Client {} has sent their custom name: {}".format(message_sender, message_content))
+                            if not self.client_custom_names:
+                                self.client_custom_names.setdefault(message_sender, message_content)
+                            elif message_sender not in self.client_custom_names:
+                                self.client_custom_names.setdefault(message_sender, message_content)
+                            elif message_sender in self.client_custom_names:
+                                self.client_custom_names[message_sender] = message_content
+                            else:
+                                print("Error: Custom name not added to the dictionary")
+
+                            print(self.client_custom_names)
+
+                    elif identifier_flag == b"comrequest":
+                        pass
+
+                    elif identifier_flag == b"answerquestion":
+                        pass
+
+                    elif identifier_flag == b"comrequest":
+                        pass
+
+                    else:
+                        print("Message not recognized")
+                        return None
+
+
+
+
+
+
+
 
 
 
@@ -364,7 +403,7 @@ class CentralServer:
             print("Client has requested to communicate with another client. Fetching active clients list:")
             print(self.active_clients[:])
         else:
-            print("Message not recognized")
+            #print("Message not recognized")
             return None
 
     def initiate_communication(self, data, addr):
