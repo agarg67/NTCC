@@ -220,8 +220,8 @@ class Client:
         self.messageId+=1
     
     def answerQuestion(self, qid, answer):
-        message="answerquestion" + " <" + str(qid) + ">" + " <" + answer + ">"
-        encmessage=self.encrypt_data_central_server(message.encode())
+        message="answerquestion" + " <" + answer + ">" + " <" + str(self.client_ip_address) +">"
+        encmessage=self.encrypt_data_central_server(message.encode()) 
         
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
         
@@ -486,7 +486,10 @@ class Client:
                     questionAnswer=self.inputData
                     self.inputData=""
                     
-                    self.answerQuestion(parsedMessage[1], questionAnswer)
+                    questionAnswer=questionAnswer.strip()
+                    qid=parsedMessage[1]
+                    qid=qid[:len(qid)-1].decode()
+                    self.answerQuestion(qid, questionAnswer)
                     
                 if(b"answerquestion" in localCentralData):
                     acceptOrReject="No"
