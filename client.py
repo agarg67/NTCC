@@ -19,7 +19,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.191.165"
+    centralServerIp="10.159.6.250"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -203,7 +203,7 @@ class Client:
         
         
     def sendQuestionToServer(self, question, answer):
-        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
+        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + (str(self.client_ip_address)) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
         
         self.terminal_printer(message.encode())
         #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
