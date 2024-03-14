@@ -3,27 +3,29 @@ import random
 import time
 import rsa
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLineEdit, QPushButton, QVBoxLayout, QWidget
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 from client_for_ui_integration import Client  # Adjusted to import the provided client
 
 
 class ClientThread(QThread):
     updateSignal = pyqtSignal(str)
 
-    def __init__(self, client, *args, **kwargs):
+    def __init__(self, client, gui, *args, **kwargs):
         super().__init__()
         self.client = client
         self.args = args
         self.kwargs = kwargs
+        self.gui = gui
 
     def run(self):
-        run_program(self.client)
+        run_program(self.client, self.gui)
         
 
 class ClientGUI(QMainWindow):
-    def __init__(self):
+    def __init__(self, client):
         super().__init__()
         self.initUI()
+        self.client = client
 
     def initUI(self):
         self.setWindowTitle('Client GUI')
@@ -42,16 +44,18 @@ class ClientGUI(QMainWindow):
 
         # Example for a "Send Command" button
         self.sendButton = QPushButton('Send')
-        self.sendButton.clicked.connect(self.run_program)
+        self.sendButton.clicked.connect(self.updateMessageLog)
         self.layout.addWidget(self.sendButton)
 
         self.centralWidget.setLayout(self.layout)
 
-    def updateMessageLog(self, message):
-        self.messageLog.append(message)
+    def updateMessageLog(self):
+        temp = str(self.inputBox.text())
+        self.messageLog.append(temp)
+        self.client.inputData = temp
 
 
-def run_program(client_instance): # the whole communication of the program happens through here and so has a while true loop to prevent exit
+def run_program(client_instance, gui_instance): # the whole communication of the program happens through here and so has a while true loop to prevent exit
         
         flagforServerConnection=True#will be made false
         
@@ -62,6 +66,7 @@ def run_program(client_instance): # the whole communication of the program happe
             
             if(client_instance.inputData!="" and "CMD#?" in client_instance.inputData):
                 client_instance.terminal_printer(client_instance.inputData)
+                gui_instance.messageLog.append(client_instance.inputData)
                 localInputData=client_instance.inputData
                 client_instance.inputData=""
 
@@ -75,6 +80,7 @@ def run_program(client_instance): # the whole communication of the program happe
 
             elif(client_instance.inputData!=""):
                 client_instance.terminal_printer(client_instance.inputData)
+                gui_instance.messageLog.append(client_instance.inputData)
                 localInputData=client_instance.inputData
                 client_instance.inputData=""
                 
@@ -105,6 +111,7 @@ def run_program(client_instance): # the whole communication of the program happe
                 
             if(client_instance.relayData!=""):
                 client_instance.terminal_printer(client_instance.relayData)
+                gui_instance.messageLog.append(client_instance.relayData)
                 localRelayData=client_instance.relayData[0]
                 localRelayAddr=client_instance.relayData[1]
                 client_instance.relayData=""
@@ -115,25 +122,31 @@ def run_program(client_instance): # the whole communication of the program happe
                 
             if(client_instance.centralData!=""):
                 client_instance.terminal_printer(client_instance.centralData)
+                gui_instance.messageLog.append(client_instance.centralData)
                 localCentralData=client_instance.centralData[0]
                 localaddr=client_instance.centralData[1]
                 client_instance.centralData=""
                 
                 if(b"ackcon" in localCentralData):
                     client_instance.terminal_printer("public key sent to server")
+                    gui_instance.messageLog.append("public key sent to server")
                     parsedDataArr=client_instance.parseIncomingMessage(localCentralData)
                     client_instance.terminal_printer(parsedDataArr)
+                    gui_instance.messageLog.append(parsedDataArr)
                     
                     client_instance.publickeyserver=parsedDataArr[1]
                     
                     messagetoenc=b"hello"
                     encmessage=rsa.encrypt(messagetoenc, client_instance.publickeyserver)
                     client_instance.terminal_printer("test encryption:")
+                    gui_instance.messageLog.append("test encryption:")
                     client_instance.terminal_printer(encmessage)
+                    gui_instance.messageLog.append(encmessage)
                     
                     
                     
                     client_instance.terminal_printer("please enter your question:")
+                    gui_instance.messageLog.append("please enter your question:")
                     while(client_instance.inputData==""):
                         time.sleep(0.0001)
                     
@@ -141,6 +154,7 @@ def run_program(client_instance): # the whole communication of the program happe
                     client_instance.inputData=""
                     
                     client_instance.terminal_printer("Please enter your answer:")
+                    gui_instance.messageLog.append("Please enter your answer:")
                     
                     while(client_instance.inputData==""):
                         time.sleep(0.0001)
@@ -158,6 +172,7 @@ def run_program(client_instance): # the whole communication of the program happe
                     questionAnswer=""
                     parsedMessage= client_instance.parseIncomingMessage(localCentralData.decode())
                     client_instance.terminal_printer(parsedMessage[2])
+                    gui_instance.messageLog.append(parsedMessage[2])
                     
                     while(client_instance.inputData==""):
                         time.sleep(0.0001)
@@ -175,6 +190,9 @@ def run_program(client_instance): # the whole communication of the program happe
                     client_instance.terminal_printer("Recieved the following answer:")
                     client_instance.terminal_printer(parsedMessage[2])
                     client_instance.terminal_printer("reply yes to accept, reply with anything else to reject")
+                    gui_instance.messageLog.append("Recieved the following answer:")
+                    gui_instance.messageLog.append(parsedMessage[2])
+                    gui_instance.messageLog.append("reply yes to accept, reply with anything else to reject")
                     
                     questionAnswer=""
                     while(client_instance.inputData==""):
@@ -194,11 +212,13 @@ def run_program(client_instance): # the whole communication of the program happe
                     
                 if(b"ackanswer" in localCentralData):
                     client_instance.terminal_printer("Your Answer has been accepted, we will move forward with completing the connection!")
+                    gui_instance.messageLog.append("Your Answer has been accepted, we will move forward with completing the connection!")
                     
                     #space here to code for getting ip map and public key
                 
                 if(b"nakanswer" in localCentralData):
                     client_instance.terminal_printer("Your answer has been rejected, please try from begining. Current session is terminated")
+                    gui_instance.messageLog.append("Your answer has been rejected, please try from begining. Current session is terminated")
                     
                     #space here to code for more things
                 localCentralData=""
@@ -208,10 +228,10 @@ def run_program(client_instance): # the whole communication of the program happe
 def main():
 
     app = QApplication(sys.argv)
-    gui = ClientGUI()
+    gui = ClientGUI(mainClient)
     gui.show()  
 
-    mainClientThread = ClientThread(mainClient)
+    mainClientThread = ClientThread(mainClient, gui)
     mainClientThread.start()
     
     sys.exit(app.exec_())
