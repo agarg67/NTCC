@@ -490,9 +490,7 @@ class Client:
                     parsedMessage = self.parseIncomingMessage(localCentralData)
                     
                     self.terminal_printer("Recieved the following answer:")
-                    questionToAnswer=parsedMessage[2]
-                    questionToAnswer=questionToAnswer[:len(questionToAnswer)-1].decode()
-                    self.terminal_printer(questionToAnswer)
+                    
                     self.terminal_printer("reply yes to accept, reply with anything else to reject")
                     
                     questionAnswer=""
