@@ -19,7 +19,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="10.159.6.250"
+    centralServerIp="192.168.191.224"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -473,7 +473,7 @@ class Client:
                 if(b"sendquestion" in localCentralData):
                     
                     questionAnswer=""
-                    parsedMessage= self.parseIncomingMessage(localCentralData.decode())
+                    parsedMessage= self.parseIncomingMessage(localCentralData)
                     self.terminal_printer(parsedMessage[2])
                     
                     while(self.inputData==""):
@@ -490,7 +490,9 @@ class Client:
                     parsedMessage = self.parseIncomingMessage(localCentralData)
                     
                     self.terminal_printer("Recieved the following answer:")
-                    self.terminal_printer(parsedMessage[2])
+                    questionToAnswer=parsedMessage[2]
+                    questionToAnswer=questionToAnswer[:len(questionToAnswer)-1].decode()
+                    self.terminal_printer(questionToAnswer)
                     self.terminal_printer("reply yes to accept, reply with anything else to reject")
                     
                     questionAnswer=""
