@@ -20,8 +20,8 @@ Client (sending messages):
 - sendpubip <public key> <ip address>: used to send the public key and ip address to the central server
 - sendquestion <question id> <question> <answer>: Used to send the question to server to start intial communication
 - answerquestion <question id> <answer>: answer a provided question
-* - ackanswer <question id>: Accept question's answer
-* - nakanswer <question id>: Reject question's answer
+ - ackanswer <question id>: Accept question's answer
+ - nakanswer <question id>: Reject question's answer
 - disreq: request to disconnect from Central server
 - comrequest: request comunication to start
 * - acksendcomereq: accept the list of ip addresses and public key

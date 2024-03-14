@@ -491,30 +491,30 @@ class Client:
                     qid=qid[:len(qid)-1].decode()
                     self.answerQuestion(qid, questionAnswer)
                     
-                if(b"answerquestion" in localCentralData):
-                    acceptOrReject="No"
+                # if(b"answerquestion" in localCentralData):
+                #     acceptOrReject="No"
                     
-                    parsedMessage = self.parseIncomingMessage(localCentralData)
+                #     parsedMessage = self.parseIncomingMessage(localCentralData)
                     
-                    self.terminal_printer("Recieved the following answer:")
-                    self.terminal_printer(parsedMessage[2])
-                    self.terminal_printer("reply yes to accept, reply with anything else to reject")
+                #     self.terminal_printer("Recieved the following answer:")
+                #     self.terminal_printer(parsedMessage[2])
+                #     self.terminal_printer("reply yes to accept, reply with anything else to reject")
                     
-                    questionAnswer=""
-                    while(self.inputData==""):
-                        time.sleep(0.0001)
+                #     questionAnswer=""
+                #     while(self.inputData==""):
+                #         time.sleep(0.0001)
                     
-                    questionAnswer=self.inputData
-                    self.inputData=""
+                #     questionAnswer=self.inputData
+                #     self.inputData=""
                     
-                    replytoSend=""
+                #     replytoSend=""
                     
-                    if("yes" in questionAnswer.lower()):
-                        replytoSend="ackanswer" + " <" + str(parsedMessage[1]) + ">"
-                    else:
-                        replytoSend="nakanswer" + " <" + str(parsedMessage[1]) + ">"
+                #     if("yes" in questionAnswer.lower()):
+                #         replytoSend="ackanswer" + " <" + str(parsedMessage[1]) + ">"
+                #     else:
+                #         replytoSend="nakanswer" + " <" + str(parsedMessage[1]) + ">"
                     
-                    self.UDPClientCentralSocket.sendto(replytoSend.encode(),(self.centralServerIp, self.centralServerPort))
+                #     self.UDPClientCentralSocket.sendto(replytoSend.encode(),(self.centralServerIp, self.centralServerPort))
                     
                 if(b"ackanswer" in localCentralData):
                     self.terminal_printer("Your Answer has been accepted, we will move forward with completing the connection!")
