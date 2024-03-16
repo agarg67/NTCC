@@ -74,9 +74,6 @@ class Client:
         #self.publicKeySelf=self.privatekeySelf.publickey()
         
         
-        print(self.publicKeySelf)
-        print(self.privatekeySelf)
-        
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
         

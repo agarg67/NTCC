@@ -231,6 +231,13 @@ def main():
     gui = ClientGUI(mainClient)
     gui.show()  
 
+    gui.messageLog.append("central port:" + str(randPort))
+    gui.messageLog.append("relay port:" + str(randPort2))
+    gui.messageLog.append(str(localIP))
+    gui.messageLog.append(str(mainClient.publicKeySelf))
+    gui.messageLog.append(str(mainClient.privatekeySelf))
+
+
     mainClientThread = ClientThread(mainClient, gui)
     mainClientThread.start()
     
@@ -247,10 +254,6 @@ if __name__ == '__main__':
     
     while(randPort2==randPort):
         randPort2=random.randrange(1500, 50000, 1)
-
-    print("central port:",randPort)
-    print("relay port:",randPort2)
-    print(localIP)
 
     mainClient = Client(localIP, randPort, randPort2)  # Assuming the Client class has necessary initialization parameters
     main()
