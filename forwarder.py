@@ -14,9 +14,9 @@ import json
 
 
 class Forwarder:
-    centralServerIp = "192.168.0.128"
+    centralServerIp = "172.20.10.10"
     centralPort = 20001
-    ip = '10.157.255.176'
+    ip = '10.157.189.162'
     noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
     noise = None
 
@@ -98,7 +98,7 @@ class Forwarder:
                 self.clusterkey3 = self.clusterkey
                 print(3)
             self.clusterSend(self.clusterkey, addr)
-            #self.forward_message(b"hi", (self.ip, 3930)) #temporary spot for function call.
+            self.forward_message(b"hi", (self.ip, 3930)) #temporary spot for function call.
 
         elif identifier_flag == b"sendMessage":
             print("forwarding")
@@ -217,7 +217,6 @@ class Forwarder:
         self.centralStartup()
         time.sleep(3)
         self.clusterInit()
-        time.sleep(3)
         while True:
             try:
                 data, address = self.client.recvfrom(self.bufferSize)
