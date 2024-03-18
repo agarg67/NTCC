@@ -8,8 +8,9 @@ from PyQt5.QtCore import QThread, pyqtSignal
 class ClientGUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.initUI()
         self.currentCommand = ""
+        self.initUI()
+        
 
     def initUI(self):
         self.setWindowTitle('Client GUI')
@@ -34,10 +35,12 @@ class ClientGUI(QMainWindow):
         self.centralWidget.setLayout(self.layout)
 
     def updateCommand(self):
+        #print(self.inputBox.text())
         temp = str(self.inputBox.text())
-        self.inputBox.text = ""
+        self.inputBox.clear()
         self.currentCommand = temp
 
     def getCommand(self):
-        return self.currentCommand
-        
+        temp=self.currentCommand
+        #self.currentCommand=""
+        return temp

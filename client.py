@@ -79,6 +79,8 @@ class Client:
         #self.privatekeySelf=RSA.generate(1024, random_generator)
         #self.publicKeySelf=self.privatekeySelf.publickey()
         
+        self.gui.show()
+        
         self.gui.messageLog.append("central port:" + str(portPass))
         self.gui.messageLog.append("relay port:" + str(portPass2))
         self.gui.messageLog.append(str(ipPass))
@@ -98,7 +100,9 @@ class Client:
         self.createSocket()
     
     # used to create all sockets for communication and setup multi-threading
+    
     def createSocket(self):
+        
         
         self.threadInput=threading.Thread(target=self.asynchrounous_input)
         self.threadInput.daemon=True
@@ -119,6 +123,16 @@ class Client:
         self.threadRelay.daemon=True
         self.threadRelay.start()
         
+        self.threadRUN=threading.Thread(target=self.run_program)
+        self.threadRUN.daemon=True
+        self.threadRUN.start()
+        
+        self.threadGUI=threading.Thread(target=self.app.exec_())
+        self.threadGUI.daemon=True
+        self.threadGUI.start()
+        
+        
+        
     def terminal_printer(self, *dataToPrint):
         print(dataToPrint)
         
@@ -126,6 +140,7 @@ class Client:
         
         while(True):
             self.inputData = self.gui.getCommand()
+            #self.gui.currentCommand=""
             
     def fetch_data_Central(self):
         while(True):
@@ -304,7 +319,7 @@ class Client:
 
         self.flagforServerConnection=False
         self.flagForackcon=False
-        self.communicationFlag=True
+        self.communicationFlag=False
 
         while(True):
             
@@ -322,8 +337,10 @@ class Client:
 
 
             if(self.inputData!=""):
+                
                 self.terminal_printer(self.inputData)
                 localInputData=self.inputData
+                self.gui.currentCommand=""
                 self.inputData=""
 
                 if(localInputData=="sendpubip" or localInputData=="CMD#?sendpubip"):
@@ -611,6 +628,7 @@ class Client:
                         
                     
                 localCentralData=""
+        #sys.exit(self.app.exec_())
                     
                           
 
@@ -644,9 +662,10 @@ def main(): # entry function of the program
     print(localIP)
     
     #creating a client object to start program 
-    client = Client(localIP, randPort, randPort2, )
+    client = Client(localIP, randPort, randPort2 )
     
     # we enter client program, everything beyond this point is coded inside the client class
-    client.run_program()
+    #client.run_program()
+    #client.app.exec_()
 
-#main() # starting the program
+main() # starting the program
