@@ -66,7 +66,7 @@ class Client:
     def __init__(self, ipPass, portPass, portPass2): #self key word is needed as the first parameter in any function that belongs to the class and act opposite to this
         self.client_ip_address=ipPass
         self.clientCentralPort=portPass
-        self.clientRelayPort=portPass2
+        self.clientRelayPort=48000 # hardcoded for now actual value is portPass2
         
         #key=rsa.generate(1024)
         self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
@@ -235,6 +235,9 @@ class Client:
         
         message=message
         #encmessage=self.encrypt_data_forwarder(message.encode())
+        
+        print("message bieng sent")
+        print(message)
         self.UDPClientRelaySocket.sendto(message, (self.forwarderServerIp, self.forwarderServerPort))
         self.messageId+=1
     
@@ -245,6 +248,8 @@ class Client:
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
 
     def decrypt_data(self, data_to_decrypt):
+        print("data to decrypt:")
+        print(data_to_decrypt)
         decrypted_data=b""
         if len(data_to_decrypt)<=256:
             print("normal decrypted data")
@@ -272,7 +277,7 @@ class Client:
         return encrypted_data
 
     def encrypt_data_forwarder(self, data_to_encrypt):
-        keyForEnc=self.publickeyPeer
+        #keyForEnc=self.publickeyPeer
         keyForEnc=self.publicKeySelf
         encrypted_data=b""
         if len(data_to_encrypt)<=245:
@@ -384,11 +389,12 @@ class Client:
 
             if(self.relayData!=""):
                 print("relay data")
-                self.terminal_printer(self.relayData)
+                
                 localRelayData=self.relayData[0]
                 localRelayAddr=self.relayData[1]
                 self.relayData=""
-
+                
+                self.terminal_printer(localRelayData)
                 localRelayData=self.decrypt_data(localRelayData)
                 print(localRelayData)
 
