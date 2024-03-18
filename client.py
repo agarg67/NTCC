@@ -12,6 +12,17 @@ import json
 # client class
 # contains bulk of the code for socket communication
 class Client:
+    def get_local_ip(): # this method is used to resolve your own ip address
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            # doesn't even have to be reachable
+            s.connect(('192.255.255.254', 1))
+            IP = s.getsockname()[0]
+        except:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP 
     
     #variables initial state
     client_ip_address="localhost"
@@ -19,7 +30,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.191.224"
+    centralServerIp="192.168.191.140"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -220,7 +231,7 @@ class Client:
         self.messageId+=1
     
     def answerQuestion(self, qid, answer):
-        message="answerquestion" + " <" + str(qid) + ">" + " <" + answer + ">"
+        message="answerquestion"+ " <" + answer + ">" + " <" + str(self.client_ip_address) +">"
         encmessage=self.encrypt_data_central_server(message.encode())
 
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
@@ -267,7 +278,7 @@ class Client:
 
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
 
-        self.flagforServerConnection=False#will be made false
+        self.flagforServerConnection=False
         self.flagForackcon=False
         self.communicationFlag=False
 
@@ -517,7 +528,10 @@ class Client:
                     self.terminal_printer("Your Answer has been accepted, we will move forward with completing the connection!")
                     
                     #space here to code for getting ip map and public key
+                    message= "sendcomreq" " <" + "for_me_is_client" + ">" + " <" + str(self.client_ip_address) +">"
+                    encmessage=self.encrypt_data_central_server(message.encode())
                     
+                    self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
                     
                     #may be moved
                     self.communicationFlag=True
@@ -527,9 +541,21 @@ class Client:
                 if(b"nakanswer" in localCentralData):
                     self.terminal_printer("Your answer has been rejected, please try from begining. Current session is terminated")
                     
-                    #space here to code for more things
+                    message = "comfailed" + " <" + "client_is_not_me" + ">" + " <" + str(self.client_ip_address) + ">"
                     
-                if(b"sendcomreq" in localCentralData):
+                    encmessage=self.encrypt_data_central_server(message.encode())
+                    self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
+                    
+                    #space here to code for more things
+                    #may be moved
+                    self.flagforServerConnection=False
+                    self.flagForackcon=False
+                    self.communicationFlag=False
+                
+                elif(b"refreshcom" in localCentralData):
+                    pass
+                 
+                elif(b"sendcomreq" in localCentralData):
                     print("got ip address+port")
                     parsedMessage=self.parseIncomingMessage(localCentralData)
                     self.publickeyPeer=parsedMessage[1]
