@@ -8,6 +8,9 @@ import threading
 import time
 import rsa
 import json
+from mainGUI import ClientGUI
+from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtCore import QThread, pyqtSignal
 
 # client class
 # contains bulk of the code for socket communication
@@ -43,6 +46,8 @@ class Client:
     
     inputData=""
     
+    app = QApplication(sys.argv)
+    gui = ClientGUI()
     
     centralData=""
     
@@ -66,7 +71,7 @@ class Client:
     def __init__(self, ipPass, portPass, portPass2): #self key word is needed as the first parameter in any function that belongs to the class and act opposite to this
         self.client_ip_address=ipPass
         self.clientCentralPort=portPass
-        self.clientRelayPort=48000 # hardcoded for now actual value is portPass2
+        self.clientRelayPort=portPass2
         
         #key=rsa.generate(1024)
         self.publicKeySelf, self.privatekeySelf = rsa.newkeys(2048)
@@ -74,7 +79,13 @@ class Client:
         #self.privatekeySelf=RSA.generate(1024, random_generator)
         #self.publicKeySelf=self.privatekeySelf.publickey()
         
-        
+        self.gui.messageLog.append("central port:" + str(portPass))
+        self.gui.messageLog.append("relay port:" + str(portPass2))
+        self.gui.messageLog.append(str(ipPass))
+        self.gui.messageLog.append(str(self.publicKeySelf))
+        self.gui.messageLog.append(str(self.privatekeySelf))
+
+
         print(self.publicKeySelf)
         print(self.privatekeySelf)
         
@@ -114,8 +125,7 @@ class Client:
     def asynchrounous_input(self):
         
         while(True):
-            inp=input()
-            self.inputData=inp
+            self.inputData = self.gui.getCommand()
             
     def fetch_data_Central(self):
         while(True):
@@ -297,7 +307,7 @@ class Client:
         self.communicationFlag=True
 
         while(True):
-
+            
             # if(self.inputData!="" and "CMD#?" in self.inputData):
             #     self.terminal_printer(self.inputData)
             #     localInputData=self.inputData
@@ -634,9 +644,9 @@ def main(): # entry function of the program
     print(localIP)
     
     #creating a client object to start program 
-    client = Client(localIP, randPort, randPort2)
+    client = Client(localIP, randPort, randPort2, )
     
     # we enter client program, everything beyond this point is coded inside the client class
     client.run_program()
 
-main() # starting the program
+#main() # starting the program
