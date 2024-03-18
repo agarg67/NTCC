@@ -14,9 +14,9 @@ import json
 
 
 class Forwarder:
-    centralServerIp = "172.20.10.10"
+    centralServerIp = "192.168.191.140"
     centralPort = 20001
-    ip = '10.157.189.162'
+    ip = '192.168.191.165'
     noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
     noise = None
 
@@ -54,6 +54,11 @@ class Forwarder:
         main_message[1] = main_message[1].replace(b">", b"")
         return main_message[1]
 
+    def client_message(self, data):
+        main_message = data.split(b" <")
+        main_message[1] = main_message[1][:len(main_message[1])-1]
+        return main_message[1]
+
     def message_sender(self, data):
         message_sender = data.split(b" <")
         message_sender[2] = message_sender[2].replace(b">", b"")
@@ -70,9 +75,16 @@ class Forwarder:
 
         identifier_flag = None
 
-        if (b"ackforwarder" in data) or (b"ackcluster" in data) or (b"sendMessage"):
+        if (b"ackforwarder" in data) or (b"ackcluster" in data):
             identifier_flag = self.message_identifier(data)
             message_content = self.main_message(data)
+            message_sender = self.message_sender(data)
+        
+        if b"sendmessage" in data:
+            identifier_flag = self.message_identifier(data)
+            message_content = self.client_message(data)
+            print("client content")
+            print(message_content)
             message_sender = self.message_sender(data)
 
         if identifier_flag == b"ackforwarder":
@@ -98,9 +110,9 @@ class Forwarder:
                 self.clusterkey3 = self.clusterkey
                 print(3)
             self.clusterSend(self.clusterkey, addr)
-            self.forward_message(b"hi", (self.ip, 3930)) #temporary spot for function call.
+            #self.forward_message(b"hi", (self.ip, 3930)) #temporary spot for function call.
 
-        elif identifier_flag == b"sendMessage":
+        elif identifier_flag == b"sendmessage":
             print("forwarding")
             self.forward_message(message_content, message_sender)
             
@@ -157,9 +169,9 @@ class Forwarder:
     ################################################################################################################################
     def ipMap(self, ips):
         if self.ipList is not None:
-            self.ipList = self.ipList +  ip
+            self.ipList = self.ipList +  ips
         else:
-            self.ipList = ip
+            self.ipList = ips
         print(ipList[0])
 
     def clusterInit(self):
@@ -198,6 +210,7 @@ class Forwarder:
         ip = self.get_local_ip().encode()
         fmessage = b"forwardedMessage" + b" <" + message + b">" + b" <" + ip + b">" + b" <" + self.ranFlag[0].encode() + b">" 
         self.client.sendto(fmessage,(self.ip, 1410))
+
 
     def get_local_ip(self): # this method is used to resolve your own ip address
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
