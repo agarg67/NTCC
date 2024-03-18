@@ -33,7 +33,7 @@ class Client:
     centralServerIp="192.168.191.140"
     centralServerPort=20001 # port is fixed up
 
-    forwarderServerIp="localhost"
+    forwarderServerIp="192.168.191.165"
     forwarderServerPort= 9999
     
     relayServerIpList=[]
@@ -224,10 +224,18 @@ class Client:
         self.questionId+=1
         
     def sendMessage(self, message):
-        message="message" + " <" + str(self.messageId) + ">" + " <" + message + ">"
         
-        encmessage=self.encrypt_data_forwarder(message.encode())
-        self.UDPClientRelaySocket.sendto(encmessage, (self.forwarderServerIp, self.forwarderServerPort))
+        message_content="message" + " <" + str(self.messageId) + ">" + " <" + message +">"
+        
+        encmessage=self.encrypt_data_forwarder(message_content.encode())
+        
+        
+
+        message=b"sendmessage"+ b" <" + encmessage + b">"  + b" <" + str(self.forwarderServerIp).encode() +  b">" 
+        
+        message=message
+        #encmessage=self.encrypt_data_forwarder(message.encode())
+        self.UDPClientRelaySocket.sendto(message, (self.forwarderServerIp, self.forwarderServerPort))
         self.messageId+=1
     
     def answerQuestion(self, qid, answer):
@@ -265,6 +273,7 @@ class Client:
 
     def encrypt_data_forwarder(self, data_to_encrypt):
         keyForEnc=self.publickeyPeer
+        keyForEnc=self.publicKeySelf
         encrypted_data=b""
         if len(data_to_encrypt)<=245:
             encrypted_data=rsa.encrypt(data_to_encrypt, keyForEnc)
@@ -280,7 +289,7 @@ class Client:
 
         self.flagforServerConnection=False
         self.flagForackcon=False
-        self.communicationFlag=False
+        self.communicationFlag=True
 
         while(True):
 
@@ -374,6 +383,7 @@ class Client:
 
 
             if(self.relayData!=""):
+                print("relay data")
                 self.terminal_printer(self.relayData)
                 localRelayData=self.relayData[0]
                 localRelayAddr=self.relayData[1]
