@@ -33,7 +33,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.191.140"
+    centralServerIp="192.168.191.165"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="192.168.191.165"
