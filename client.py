@@ -33,7 +33,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.191.165"
+    centralServerIp="192.168.191.37"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="192.168.191.165"
@@ -134,7 +134,8 @@ class Client:
         
         
     def terminal_printer(self, *dataToPrint):
-        print(dataToPrint)
+        #print(dataToPrint)
+        self.gui.messageLog.append(str(dataToPrint))
         
     def asynchrounous_input(self):
         
