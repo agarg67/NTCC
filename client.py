@@ -473,7 +473,7 @@ class Client:
                             partnerName=partnerName.strip()
                             print(partnerName)
 
-                        message= "sendpartnerserver " + "<" + partnerName +">" + " <" + (str(self.client_ip_address))+">"
+                        message= "sendpartnerserver " + "<" + partnerName +">" + " <" + (str(self.client_ip_address))+">" + " <" + str(self.clientRelayPort) + ">"
                         enc=self.encrypt_data_central_server(message.encode())
 
                         self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
@@ -535,7 +535,8 @@ class Client:
                     
                     #may be moved
                     self.communicationFlag=True
-                    print("now please use your textbox to send messages to your partner")
+                    print("congrats we are just doing final configs")
+                    #print("now please use your textbox to send messages to your partner")
                     
                 
                 if(b"nakanswer" in localCentralData):
