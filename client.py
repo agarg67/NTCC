@@ -481,7 +481,7 @@ class Client:
 
                         name=name.strip()
 
-                        if(len(name)>4):
+                        if(len(name)!=4):
                             print("incorrect format")
                         else:
                             nameFlag=True
