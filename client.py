@@ -531,7 +531,7 @@ class Client:
                     message= "sendcomreq" " <" + "for_me_is_client" + ">" + " <" + str(self.client_ip_address) +">"
                     encmessage=self.encrypt_data_central_server(message.encode())
                     
-                    self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
+                    #self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
                     
                     #may be moved
                     self.communicationFlag=True
