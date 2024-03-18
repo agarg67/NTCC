@@ -33,7 +33,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="10.14.0.2"
+    centralServerIp="192.168.191.185"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="192.168.191.165"
@@ -135,12 +135,9 @@ class Client:
         
     def terminal_printer(self, *dataToPrint):
         #print(dataToPrint)
-        strToAppend=""
         
-        for i in dataToPrint:
-            strToAppend+= i +" "
             
-        self.gui.messageLog.append(str(strToAppend))
+        self.gui.messageLog.append(str(dataToPrint))
         
     def asynchrounous_input(self):
         
@@ -320,7 +317,10 @@ class Client:
         print(encrypted_data)
 
         return encrypted_data
-
+    def clear_input_data(self):
+        self.inputData=""
+        self.gui.currentCommand=""
+        
     def run_program(self): # the whole communication of the program happens through here and so has a while true loop to prevent exit
 
         self.flagforServerConnection=False
@@ -347,7 +347,7 @@ class Client:
                 self.terminal_printer(self.inputData)
                 localInputData=self.inputData
                 self.gui.currentCommand=""
-                self.inputData=""
+                self.clear_input_data()
 
                 if(localInputData=="sendpubip" or localInputData=="CMD#?sendpubip"):
                     self.sendPublickeyIP()
@@ -363,7 +363,7 @@ class Client:
                             time.sleep(0.0001)
 
                         question=self.inputData
-                        self.inputData=""
+                        self.clear_input_data()
 
                         self.terminal_printer("Please enter your answer:")
 
@@ -371,7 +371,7 @@ class Client:
                             time.sleep(0.0001)
 
                         answer=self.inputData
-                        self.inputData=""
+                        self.clear_input_data()
 
                         self.sendQuestionToServer(question, answer)
                     else:
@@ -476,7 +476,8 @@ class Client:
                         while(self.inputData==""):
                             time.sleep(0.0001)
                         name=self.inputData
-                        self.inputData=""
+                        #self.inputData=""
+                        self.clear_input_data()
 
                         name=name.strip()
 
@@ -506,7 +507,7 @@ class Client:
                             time.sleep(0.0001)
 
                         partnerName=self.inputData
-                        self.inputData=""
+                        self.clear_input_data()
 
                         partnerName=partnerName.strip()
                         print(partnerName)
@@ -517,7 +518,7 @@ class Client:
                                 time.sleep(0.0001)
 
                             partnerName=self.inputData
-                            self.inputData=""
+                            self.clear_input_data()
 
                             partnerName=partnerName.strip()
                             print(partnerName)
@@ -544,7 +545,7 @@ class Client:
                         time.sleep(0.0001)
 
                     questionAnswer=self.inputData
-                    self.inputData=""
+                    self.clear_input_data()
 
                     self.answerQuestion(parsedMessage[1], questionAnswer)
 
@@ -562,7 +563,7 @@ class Client:
                         time.sleep(0.0001)
 
                     questionAnswer=self.inputData
-                    self.inputData=""
+                    self.clear_input_data()
 
                     replytoSend=""
 
