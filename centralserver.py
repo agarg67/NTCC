@@ -28,14 +28,15 @@ class ipMapper_manager:
     def __init__(self):
         # This will be a list of the IP addresses of the servers
         self.server_ips = []
-    def __enter__(self):
+
+    def add_client_IP(self, ip_address):
+        self.server_ips.append(ip_address)
+
+    def fetch_server_IPs(self):
         return self.server_ips
 
-    def add_IP_addr(self, ip_addr):
-        self.server_ips.append(ip_addr)
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
+    def clear_IPs(self):
+        self.server_ips.clear()
 
 
 class CentralServer:
@@ -50,6 +51,8 @@ class CentralServer:
         self.received_messages = {}
         self.questions_and_answer = {}
         self.clients_com = {}
+        self.listofclientIP = []
+        self.ip_map = ipMapper_manager()
         self.threadUDPserver = None
 
         # forwarder information
@@ -161,6 +164,8 @@ class CentralServer:
     ## Apparently only the sendpubip and forwarder messages will be unecrypted, everything else will be assumed encrypted ##
 
     ## TO DO : NEED TO ADD FLAGS IN ORDER FOR THE CLIENT TO FOLLOW THE PROTOCOLS ##
+    ## Add a for loop in order to check for all clients in case they haven't answers the question correctly ##
+    ## Possibly could add a timer to refresh the status of the active connections ##
 
 
     def parse_message(self, data, addr):
@@ -230,7 +235,7 @@ class CentralServer:
         elif identifier_flag == b"forwarder":
 
             if source_ip == message_sender:
-                self.forwarderIP = source_ip
+                self.forwarderIP = addr
                 self.forwarderPublicKey = rsa.PublicKey.load_pkcs1(message_content.decode())
 
                 message = (b"ackforwarder <" + pem + b"> <" + server_ip + b">")
@@ -240,7 +245,7 @@ class CentralServer:
 
         else:
 
-            if source_ip == self.forwarderIP:
+            if addr == self.forwarderIP:
 
                 ip_map = ipMapper_manager()
 
@@ -419,6 +424,9 @@ class CentralServer:
                                     message2 = (b"sendquestion <" + self.questions_and_answer[addr][2] + b"> <" +
                                                self.questions_and_answer[addr][0] + b"> <" + server_ip + b">")
 
+                                    self.listofclientIP.append(addr)
+                                    self.listofclientIP.append(temp_key)
+
                                     self.clients_com.setdefault(addr, [temp_key, False])
                                     self.clients_com.setdefault(temp_key, [addr, False])
 
@@ -445,6 +453,8 @@ class CentralServer:
 
                                 message = (b"ackanswer <" + b"Correct" + b"> <" + server_ip + b">")
 
+                                self.ip_map.add_client_IP(addr)
+
                                 encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
                                 self.UDPserver.sendto(encrypted_message, addr)
                             else:
@@ -456,9 +466,8 @@ class CentralServer:
                     elif initiate_communication and (self.clients_com[addr][1] and
                                                      self.clients_com[self.clients_com[other_client][1]]):
 
-                        ip_map = ipMapper_manager()
-                        ip_map.add_IP_addr(addr)
-                        ip_map.add_IP_addr(other_client)
+                        self.ip_map.add_IP_addr(addr)
+                        self.ip_map.add_IP_addr(other_client)
 
                         print("Both clients have answered the question correctly, initiating communication")
 
@@ -603,8 +612,36 @@ class CentralServer:
             print("##### Server has failed to generate RSA keys, retrying... #####")
 
         while keys_generated and (time.time() < server_refresh):
-            data, address = self.UDPserver.recvfrom(self.bufferSize)
-            self.receive_message(data, address)
+
+
+            if not self.clients_com:
+                data, address = self.UDPserver.recvfrom(self.bufferSize)
+                self.receive_message(data, address)
+            else:
+
+                if (not self.clients_com[self.listofclientIP[0]][1] or not self.clients_com[self.listofclientIP[1]][1]):
+                    data, address = self.UDPserver.recvfrom(self.bufferSize)
+                    self.receive_message(data, address)
+                elif (self.clients_com[self.listofclientIP[0]][1] and self.clients_com[self.listofclientIP[1]][1]):
+
+
+                    temp = json.dumps(self.ip_map.fetch_server_IPs()).encode('utf-8')
+                    print(temp)
+
+                    message = (b"ackipmapper <" + temp + b"> <" + str(self.fetch_ip_address()).encode() + b">")
+                    print(message)
+
+                    encrypted_message = self.split_and_encrypt(message, self.forwarderPublicKey)
+                    # encrypted_message = rsa.encrypt(message, self.forwarderPublicKey)
+                    print(encrypted_message)
+
+                    self.UDPserver.sendto(encrypted_message, self.forwarderIP)
+                    self.clients_com.clear()
+
+
+                    #message =
+
+
 
     #################################### HELPER FUNCTIONS FOR SERVER ###########################################
     ### A Keep alive protocol that ensures a client is still active ###

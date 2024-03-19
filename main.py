@@ -4,56 +4,8 @@ import time
 import rsa
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLineEdit, QPushButton, QVBoxLayout, QWidget
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
-from client_for_ui_integration import Client  # Adjusted to import the provided client
-
-
-class ClientThread(QThread):
-    updateSignal = pyqtSignal(str)
-
-    def __init__(self, client, gui, *args, **kwargs):
-        super().__init__()
-        self.client = client
-        self.args = args
-        self.kwargs = kwargs
-        self.gui = gui
-
-    def run(self):
-        run_program(self.client, self.gui)
-        
-
-class ClientGUI(QMainWindow):
-    def __init__(self, client):
-        super().__init__()
-        self.initUI()
-        self.client = client
-
-    def initUI(self):
-        self.setWindowTitle('Client GUI')
-        self.setGeometry(100, 100, 800, 600)
-
-        self.centralWidget = QWidget()
-        self.setCentralWidget(self.centralWidget)
-        self.layout = QVBoxLayout()
-
-        self.messageLog = QTextEdit()
-        self.messageLog.setReadOnly(True)
-        self.layout.addWidget(self.messageLog)
-
-        self.inputBox = QLineEdit()
-        self.layout.addWidget(self.inputBox)
-
-        # Example for a "Send Command" button
-        self.sendButton = QPushButton('Send')
-        self.sendButton.clicked.connect(self.updateMessageLog)
-        self.layout.addWidget(self.sendButton)
-
-        self.centralWidget.setLayout(self.layout)
-
-    def updateMessageLog(self):
-        temp = str(self.inputBox.text())
-        self.messageLog.append(temp)
-        self.client.inputData = temp
-
+from client import Client  # Adjusted to import the provided client
+from mainGUI import ClientGUI
 
 def run_program(client_instance, gui_instance): # the whole communication of the program happens through here and so has a while true loop to prevent exit
         
@@ -227,21 +179,10 @@ def run_program(client_instance, gui_instance): # the whole communication of the
 
 def main():
 
-    app = QApplication(sys.argv)
-    gui = ClientGUI(mainClient)
-    gui.show()  
-
-    gui.messageLog.append("central port:" + str(randPort))
-    gui.messageLog.append("relay port:" + str(randPort2))
-    gui.messageLog.append(str(localIP))
-    gui.messageLog.append(str(mainClient.publicKeySelf))
-    gui.messageLog.append(str(mainClient.privatekeySelf))
-
-
-    mainClientThread = ClientThread(mainClient, gui)
-    mainClientThread.start()
-    
-    sys.exit(app.exec_())
+    mainClient = Client(localIP, randPort, randPort2)  # Assuming the Client class has necessary initialization parameters
+    mainClient.run_program()
+    mainClient.gui.show()
+    sys.exit(mainClient.app.exec_())
 
 if __name__ == '__main__':
     #fetching the ip address here
@@ -252,8 +193,6 @@ if __name__ == '__main__':
     
     randPort2=random.randrange(1500, 50000, 1)
     
-    while(randPort2==randPort):
+    while(randPort2==randPort or (randPort==20001 or randPort2==20001)):
         randPort2=random.randrange(1500, 50000, 1)
-
-    mainClient = Client(localIP, randPort, randPort2)  # Assuming the Client class has necessary initialization parameters
     main()
