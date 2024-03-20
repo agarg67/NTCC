@@ -136,8 +136,8 @@ class Client:
     def terminal_printer(self, *dataToPrint):
         #print(dataToPrint)
         
-            
-        self.gui.messageLog.append(str(dataToPrint))
+        for i in dataToPrint:
+            self.gui.messageLog.append(str(i))
         
     def asynchrounous_input(self):
         self.gui.currentCommand=""
@@ -190,10 +190,11 @@ class Client:
                     breakIndex=i
                     break
                 tempVar+=tempArr[i]
-                
+            
+            print("supposed key:",tempVar)
             ipPortlist=tempArr[breakIndex]
             ipPortlist=ipPortlist[7:len(ipPortlist)-1].decode().strip()
-            tempVar=tempVar[1][0:len(tempVar[1])-1].decode()
+            tempVar=tempVar[0:len(tempVar)-1].decode()
             loadedKey=rsa.PublicKey.load_pkcs1(tempVar)
             tempArr=[cmd, loadedKey, ipPortlist]
             
@@ -488,10 +489,13 @@ class Client:
                             nameFlag=True
 
                     name=name[0:3] + "##" + name[3:]
+                    
+                   
                     message= "sendnameserver " + "<" + name +">" + " <" + (str(self.client_ip_address)) + ">"
                     enc=self.encrypt_data_central_server(message.encode())
 
                     self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                    self.terminal_printer("your name has been accepted, and sent to the server")
 
                 if(b"comrequest" in localCentralData):
                     self.terminal_printer("please choose the partner to communicate with (note please put name exactly as you see it)")
@@ -585,7 +589,7 @@ class Client:
                     #self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
                     
                     #may be moved
-                    self.communicationFlag=True
+                    
                     self.terminal_printer("congrats we are just doing final configs")
                     #print("now please use your textbox to send messages to your partner")
                     
@@ -619,12 +623,14 @@ class Client:
                         #tempVar=ipportListstringsplit.at(i)
                     tempVar=ipportListstringsplit
                     tempVar=tempVar.split(",")
-                    tempVar[0]=tempVar.strip()
+                    tempVar[0]=tempVar[0].strip()
                     tempVar[1]=int(tempVar[1])
                     tempVarArr.append(tempVar)
                     
+                    print("ip port array:", tempVarArr)
                     self.forwarderServerIp=tempVar[0]
                     self.forwarderServerPort=tempVar[1]
+                    
                     
                     self.relayServerIpporttupleList=tempVarArr
                     
@@ -632,6 +638,7 @@ class Client:
                         self.relayServerIpList.append(j[0])
                         self.relayServerPortList.append(j[1])
                     
+                    self.communicationFlag=True
                     print("stored ip-port")
                         
                     
