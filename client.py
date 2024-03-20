@@ -499,6 +499,7 @@ class Client:
 
                     self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
                     self.terminal_printer("your name has been accepted, and sent to the server")
+                    self.terminal_printer("Please press the sendquestion button when you are ready")
 
                 if(b"comrequest" in localCentralData):
                     self.terminal_printer("please choose the partner to communicate with (note please put name exactly as you see it)")
@@ -509,7 +510,7 @@ class Client:
                         nameArray=parsedMessage[1]
 
                         for i in nameArray:
-                            print(i)
+                            self.terminal_printer(i)
 
                         while(self.inputData==""):
                             time.sleep(0.0001)
