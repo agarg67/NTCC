@@ -307,8 +307,8 @@ class Client:
         return encrypted_data
 
     def encrypt_data_forwarder(self, data_to_encrypt):
-        #keyForEnc=self.publickeyPeer
-        keyForEnc=self.publicKeySelf
+        keyForEnc=self.publickeyPeer
+        #keyForEnc=self.publicKeySelf
         encrypted_data=b""
         if len(data_to_encrypt)<=245:
             encrypted_data=rsa.encrypt(data_to_encrypt, keyForEnc)
@@ -377,7 +377,7 @@ class Client:
 
                         self.sendQuestionToServer(question, answer)
                     else:
-                        print("ERRROR: pub key not accepted yet")
+                        self.terminal_printer("ERRROR: pub key not accepted yet")
 
                 elif(localInputData=="comrequest" or localInputData=="CMD#?comrequest"):
                     if(self.flagforServerConnection==True):
@@ -390,7 +390,7 @@ class Client:
                         self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
 
                     else:
-                        print("can't start iniate process question not accepted yet")
+                        self.terminal_printer("can't start iniate process question not accepted yet")
 
                 else:
 
@@ -433,9 +433,12 @@ class Client:
                 localRelayData=self.decrypt_data(localRelayData)
                 self.terminal_printer(localRelayData)
 
-                if(b"dataSent" in localRelayData): # will be changed
-                    message="gotMessage"
-                    self.UDPClientRelaySocket.sendto(message.encode(), localRelayAddr)
+                if(b"message" in localRelayData): # will be changed
+                    parsedData=self.parseIncomingMessage(localRelayData)
+                    
+                    messagetodisplay=parsedData[2]
+                    self.terminal_printer(messagetodisplay)
+                
 
                 localRelayData=""
 
@@ -533,7 +536,7 @@ class Client:
 
                         self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
                     else:
-                        print("no other client right now please try in some time")
+                        self.terminal_printer("no other client right now please try in some time")
 
 
                 if(b"sendquestion" in localCentralData):
@@ -640,6 +643,7 @@ class Client:
                     
                     self.communicationFlag=True
                     print("stored ip-port")
+                    self.terminal_printer("you can use your text box to communicate with your peer now!")
                         
                     
                 localCentralData=""
