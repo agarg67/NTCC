@@ -36,20 +36,25 @@ class Noise:
         main_message[1] = main_message[1].replace(b">", b"")
         return main_message[1]
 
+    def client_message(self, data):
+        main_message = data.split(b" <")
+        main_message[1] = main_message[1][:len(main_message[1])-1]
+        return main_message[1]
+
     def message_sender(self, data):
         message_sender = data.split(b" <")
         message_sender[2] = message_sender[2].replace(b">", b"")
         return message_sender[2]
 
-    def parse_message(self, data, addr):
-        serverIP = self.get_local_ip().encode()
-        pubkey = self.publicKey.save_pkcs1()
-        source = addr[0].encode()
-
     def flag(self, data):
         flag = data.split(b" <")
         flag[3] = flag[3].replace(b">", b"")
         return flag[3]
+
+    def parse_message(self, data, addr):
+        serverIP = self.get_local_ip().encode()
+        pubkey = self.publicKey.save_pkcs1()
+        source = addr[0].encode()
 
         print("This is the data received: {}".format(data))
         print("\nThis is the data received from: {}".format(addr))
@@ -59,7 +64,7 @@ class Noise:
         if(b"forwardedMessage" in data):
             identifier_flag = self.message_identifier(data)
             print(identifier_flag)
-            message_content = self.main_message(data)
+            message_content = self.client_message(data)
             message_sender = self.message_sender(data)
             flag = self.flag(data)
 
@@ -78,6 +83,7 @@ class Noise:
         elif identifier_flag == b"forwardedMessage":
             print("it works")
             print(message_content)
+            self.UDPserver.sendto(message_content, ("192.168.191.37", 48000))
 
         else:
             # possibly encrypted message which needs to be decrypted

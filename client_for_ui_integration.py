@@ -31,7 +31,7 @@ class Client:
     clientCentralPort=0  
     clientRelayPort=0
 
-    centralServerIp="localhost"
+    centralServerIp="192.168.191.165"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="localhost"
@@ -73,9 +73,6 @@ class Client:
         #self.privatekeySelf=RSA.generate(1024, random_generator)
         #self.publicKeySelf=self.privatekeySelf.publickey()
         
-        
-        print(self.publicKeySelf)
-        print(self.privatekeySelf)
         
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
