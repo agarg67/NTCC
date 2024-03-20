@@ -548,6 +548,18 @@ class CentralServer:
                     self.receive_message(data, address)
                 elif (self.clients_com[self.listofclientIP[0]][1] and self.clients_com[self.listofclientIP[1]][1]):
 
+                    temp_pem = self.active_clients_and_keys[self.listofclientIP[0]].save_pkcs1()
+                    temp_pem2 = self.active_clients_and_keys[self.listofclientIP[1]].save_pkcs1()
+
+                    message = (b"sendcomreq" + b" <" + temp_pem + b"> <ip_port " + str(self.forwarderIP[0]).encode() + b"," + str(self.forwarderIP[1]).encode() + b">")
+                    message2 = (b"sendcomreq" + b" <" + temp_pem2 + b"> <ip_port " + str(self.forwarderIP[0]).encode() + b"," + str(self.forwarderIP[1]).encode() + b">")
+
+                    encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[self.listofclientIP[1]])
+                    encrypted_message2 = self.split_and_encrypt(message2, self.active_clients_and_keys[self.listofclientIP[0]])
+
+                    self.UDPserver.sendto(encrypted_message2, self.listofclientIP[0])
+                    self.UDPserver.sendto(encrypted_message, self.listofclientIP[1])
+
 
                     temp = json.dumps(self.ip_map.fetch_server_IPs()).encode('utf-8')
                     print(temp)
