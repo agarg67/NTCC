@@ -33,7 +33,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.191.185"
+    centralServerIp="192.168.216.224"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="192.168.191.165"
@@ -81,15 +81,15 @@ class Client:
         
         self.gui.show()
         
-        self.gui.messageLog.append("central port:" + str(portPass))
-        self.gui.messageLog.append("relay port:" + str(portPass2))
-        self.gui.messageLog.append(str(ipPass))
-        self.gui.messageLog.append(str(self.publicKeySelf))
-        self.gui.messageLog.append(str(self.privatekeySelf))
+        #self.gui.messageLog.append("central port:" + str(portPass))
+        #self.gui.messageLog.append("relay port:" + str(portPass2))
+        #self.gui.messageLog.append(str(ipPass))
+        #self.gui.messageLog.append(str(self.publicKeySelf))
+        #self.gui.messageLog.append(str(self.privatekeySelf))
 
 
-        print(self.publicKeySelf)
-        print(self.privatekeySelf)
+        #print(self.publicKeySelf)
+        #print(self.privatekeySelf)
         
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
@@ -140,10 +140,11 @@ class Client:
         self.gui.messageLog.append(str(dataToPrint))
         
     def asynchrounous_input(self):
-        
+        self.gui.currentCommand=""
         while(True):
-            self.inputData = self.gui.getCommand()
-            #self.gui.currentCommand=""
+            if(self.gui.currentCommand!=""):
+                self.inputData = self.gui.getCommand()
+                self.gui.currentCommand=""
             
     def fetch_data_Central(self):
         while(True):
@@ -157,7 +158,7 @@ class Client:
             
     def parseIncomingMessage(self, messageToParse):
         finalArr=[]
-        self.terminal_printer("message to parse:\n", messageToParse)
+        #self.terminal_printer("message to parse:\n", messageToParse)
         if(b"<" not in messageToParse):
             finalArr.append(messageToParse)
             return finalArr
@@ -172,11 +173,11 @@ class Client:
             for i in range(1,len(tempArr)):
                 tempVar+=tempArr[i]
             tempArr[1]=tempVar
-            print(tempArr[1][0:len(tempArr[1])-1])
+            #print(tempArr[1][0:len(tempArr[1])-1])
             tempArr[1]= (tempArr[1][0:len(tempArr[1])-1]).decode()
                 #pickle.loads(tempArr[1][0:len(tempArr[1])-1]))
             tempArr=tempArr[:2]
-            print(tempArr)
+            #print(tempArr)
         
         elif(b"sendcomreq" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
@@ -200,14 +201,14 @@ class Client:
             tempArr[0]=tempArr[0].decode().strip()
             cmd=tempArr[0]
             tempVar=tempArr[1][0:len(tempArr[1])-1]
-            print(tempVar)
+            #print(tempVar)
             if(b"NO OTHER" not in tempVar):
                 #print(tempVar)
                 tempVar=json.loads(tempVar.decode())
             else:
                 tempVar=tempVar.decode().strip()
             
-            print(tempVar)
+            #print(tempVar)
             # for i in range(len(tempVar)):
             #     tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
             
@@ -427,9 +428,9 @@ class Client:
                 localRelayAddr=self.relayData[1]
                 self.relayData=""
                 
-                self.terminal_printer(localRelayData)
+                #self.terminal_printer(localRelayData)
                 localRelayData=self.decrypt_data(localRelayData)
-                print(localRelayData)
+                self.terminal_printer(localRelayData)
 
                 if(b"dataSent" in localRelayData): # will be changed
                     message="gotMessage"
@@ -438,19 +439,19 @@ class Client:
                 localRelayData=""
 
             if(self.centralData!=""):
-                self.terminal_printer(self.centralData)
+                #self.terminal_printer(self.centralData)
                 localCentralData=self.centralData[0]
                 localaddr=self.centralData[1]
                 self.centralData=""
 
                 localCentralData=self.decrypt_data(localCentralData)
-                print("decryptedData")
-                print(localCentralData)
+                self.terminal_printer("decryptedData")
+                self.terminal_printer(localCentralData)
 
                 if(b"ackcon" in localCentralData):
                     self.terminal_printer("public key sent to server")
                     parsedDataArr=self.parseIncomingMessage(localCentralData)
-                    self.terminal_printer(parsedDataArr)
+                    #self.terminal_printer(parsedDataArr)
 
                     self.publickeyserver=parsedDataArr[1]
 
@@ -459,12 +460,12 @@ class Client:
                     self.publickeyserver = rsa.PublicKey.load_pkcs1(self.publickeyserver)
 
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
-                    self.terminal_printer("test encryption:")
-                    self.terminal_printer(encmessage)
+                    #self.terminal_printer("test encryption:")
+                    #self.terminal_printer(encmessage)
                     self.flagForackcon=True
 
                 elif(b"ackquestion" in localCentralData):
-                    print("your question has been accepted")
+                    self.terminal_printer("your question has been accepted")
                     self.flagforServerConnection=True
 
                 if(b"unameCS" in localCentralData):
@@ -482,7 +483,7 @@ class Client:
                         name=name.strip()
 
                         if(len(name)!=4):
-                            print("incorrect format")
+                            self.terminal_printer("incorrect format")
                         else:
                             nameFlag=True
 
@@ -585,7 +586,7 @@ class Client:
                     
                     #may be moved
                     self.communicationFlag=True
-                    print("congrats we are just doing final configs")
+                    self.terminal_printer("congrats we are just doing final configs")
                     #print("now please use your textbox to send messages to your partner")
                     
                 
