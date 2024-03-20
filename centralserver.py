@@ -486,89 +486,13 @@ class CentralServer:
 
                         #message = (b"sendip")
 
-
-
-
-
                     else:
                         print("Message not recognized")
                         return None
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             else:
                 print("Client {} is not in the active clients list".format(addr))
 
-        """
-        elif identifier_flag == b"sendquestion":
-
-            temp_message = []
-            temp_message = data.split(b" <")
-            temp_message[1] = temp_message[1].replace(b">", b"")
-            temp_message[2] = temp_message[2].replace(b">", b"")
-            temp_message[3] = temp_message[3].replace(b">", b"")
-
-            print(temp_message)
-
-
-            if message_sender in self.active_clients_and_keys:
-
-                if not self.active_clients_and_keys[message_sender]:
-                    print("Client {} has not sent their public key".format(message_sender))
-
-                else:
-                    ciphertext = pickle.loads(message_content)
-                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
-                    print("Decrypted message: {}".format(decrypted_message))
-
-
-            else:
-                print("Client {} is not in the active clients list".format(message_sender))
-
-
-
-
-            pass
-        elif identifier_flag == b"answerquestion":
-            pass
-        elif identifier_flag == b"comrequest":
-            pass
-        """
-
-        message_identifier = data.split(b" <")
-
-        if message_identifier[0] == b"sendpubip":
-            pass
-
-        elif message_identifier[0] == "sendquestion":
-            print("Question received from Client with {}".format(addr))
-            ##WOULD NEED TO KNOW THE FORMAT OF THE QUESTION MESSAGE
-            self.questions.append(message_identifier[1])
-            message = "ackquestion" + " <" + message_identifier[2] + "> "  # This will be the question ID received
-            self.UDPserver.sendto(message.encode(), addr)
-
-        elif message_identifier[0] == "answerquestion":
-            print("Answer received from User")
-            ##NEED To REPLACE WITH FORMAT
-
-        elif message_identifier[0] == "comrequest":
-            print("Client has requested to communicate with another client. Fetching active clients list:")
-            print(self.active_clients[:])
-        else:
-            # print("Message not recognized")
-            return None
 
     def initiate_communication(self, data, addr):
         ### Checks if there is two clients simultaneously requesting to communicate ###
