@@ -33,7 +33,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.191.185"
+    centralServerIp="192.168.216.224"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="192.168.191.165"
@@ -81,15 +81,15 @@ class Client:
         
         self.gui.show()
         
-        self.gui.messageLog.append("central port:" + str(portPass))
-        self.gui.messageLog.append("relay port:" + str(portPass2))
-        self.gui.messageLog.append(str(ipPass))
-        self.gui.messageLog.append(str(self.publicKeySelf))
-        self.gui.messageLog.append(str(self.privatekeySelf))
+        #self.gui.messageLog.append("central port:" + str(portPass))
+        #self.gui.messageLog.append("relay port:" + str(portPass2))
+        #self.gui.messageLog.append(str(ipPass))
+        #self.gui.messageLog.append(str(self.publicKeySelf))
+        #self.gui.messageLog.append(str(self.privatekeySelf))
 
 
-        print(self.publicKeySelf)
-        print(self.privatekeySelf)
+        #print(self.publicKeySelf)
+        #print(self.privatekeySelf)
         
         qid_base=random.randrange(1001, 2000, 2)
         mid_base=random.randrange(2001, 3000, 3)
@@ -136,14 +136,15 @@ class Client:
     def terminal_printer(self, *dataToPrint):
         #print(dataToPrint)
         
-            
-        self.gui.messageLog.append(str(dataToPrint))
+        for i in dataToPrint:
+            self.gui.messageLog.append(str(i))
         
     def asynchrounous_input(self):
-        
+        self.gui.currentCommand=""
         while(True):
-            self.inputData = self.gui.getCommand()
-            #self.gui.currentCommand=""
+            if(self.gui.currentCommand!=""):
+                self.inputData = self.gui.getCommand()
+                self.gui.currentCommand=""
             
     def fetch_data_Central(self):
         while(True):
@@ -157,7 +158,7 @@ class Client:
             
     def parseIncomingMessage(self, messageToParse):
         finalArr=[]
-        self.terminal_printer("message to parse:\n", messageToParse)
+        #self.terminal_printer("message to parse:\n", messageToParse)
         if(b"<" not in messageToParse):
             finalArr.append(messageToParse)
             return finalArr
@@ -172,11 +173,11 @@ class Client:
             for i in range(1,len(tempArr)):
                 tempVar+=tempArr[i]
             tempArr[1]=tempVar
-            print(tempArr[1][0:len(tempArr[1])-1])
+            #print(tempArr[1][0:len(tempArr[1])-1])
             tempArr[1]= (tempArr[1][0:len(tempArr[1])-1]).decode()
                 #pickle.loads(tempArr[1][0:len(tempArr[1])-1]))
             tempArr=tempArr[:2]
-            print(tempArr)
+            #print(tempArr)
         
         elif(b"sendcomreq" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
@@ -189,10 +190,11 @@ class Client:
                     breakIndex=i
                     break
                 tempVar+=tempArr[i]
-                
+            
+            print("supposed key:",tempVar)
             ipPortlist=tempArr[breakIndex]
             ipPortlist=ipPortlist[7:len(ipPortlist)-1].decode().strip()
-            tempVar=tempVar[1][0:len(tempVar[1])-1].decode()
+            tempVar=tempVar[0:len(tempVar)-1].decode()
             loadedKey=rsa.PublicKey.load_pkcs1(tempVar)
             tempArr=[cmd, loadedKey, ipPortlist]
             
@@ -200,14 +202,14 @@ class Client:
             tempArr[0]=tempArr[0].decode().strip()
             cmd=tempArr[0]
             tempVar=tempArr[1][0:len(tempArr[1])-1]
-            print(tempVar)
+            #print(tempVar)
             if(b"NO OTHER" not in tempVar):
                 #print(tempVar)
                 tempVar=json.loads(tempVar.decode())
             else:
                 tempVar=tempVar.decode().strip()
             
-            print(tempVar)
+            #print(tempVar)
             # for i in range(len(tempVar)):
             #     tempVar[i]=tempVar[i][2:len(tempVar[1])-1]
             
@@ -305,8 +307,8 @@ class Client:
         return encrypted_data
 
     def encrypt_data_forwarder(self, data_to_encrypt):
-        #keyForEnc=self.publickeyPeer
-        keyForEnc=self.publicKeySelf
+        keyForEnc=self.publickeyPeer
+        #keyForEnc=self.publicKeySelf
         encrypted_data=b""
         if len(data_to_encrypt)<=245:
             encrypted_data=rsa.encrypt(data_to_encrypt, keyForEnc)
@@ -375,7 +377,7 @@ class Client:
 
                         self.sendQuestionToServer(question, answer)
                     else:
-                        print("ERRROR: pub key not accepted yet")
+                        self.terminal_printer("ERRROR: pub key not accepted yet")
 
                 elif(localInputData=="comrequest" or localInputData=="CMD#?comrequest"):
                     if(self.flagforServerConnection==True):
@@ -388,7 +390,7 @@ class Client:
                         self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
 
                     else:
-                        print("can't start iniate process question not accepted yet")
+                        self.terminal_printer("can't start iniate process question not accepted yet")
 
                 else:
 
@@ -427,30 +429,33 @@ class Client:
                 localRelayAddr=self.relayData[1]
                 self.relayData=""
                 
-                self.terminal_printer(localRelayData)
+                #self.terminal_printer(localRelayData)
                 localRelayData=self.decrypt_data(localRelayData)
-                print(localRelayData)
+                self.terminal_printer(localRelayData)
 
-                if(b"dataSent" in localRelayData): # will be changed
-                    message="gotMessage"
-                    self.UDPClientRelaySocket.sendto(message.encode(), localRelayAddr)
+                if(b"message" in localRelayData): # will be changed
+                    parsedData=self.parseIncomingMessage(localRelayData)
+                    
+                    messagetodisplay=parsedData[2]
+                    self.terminal_printer(messagetodisplay)
+                
 
                 localRelayData=""
 
             if(self.centralData!=""):
-                self.terminal_printer(self.centralData)
+                #self.terminal_printer(self.centralData)
                 localCentralData=self.centralData[0]
                 localaddr=self.centralData[1]
                 self.centralData=""
 
                 localCentralData=self.decrypt_data(localCentralData)
-                print("decryptedData")
-                print(localCentralData)
+                self.terminal_printer("decryptedData")
+                self.terminal_printer(localCentralData)
 
                 if(b"ackcon" in localCentralData):
                     self.terminal_printer("public key sent to server")
                     parsedDataArr=self.parseIncomingMessage(localCentralData)
-                    self.terminal_printer(parsedDataArr)
+                    #self.terminal_printer(parsedDataArr)
 
                     self.publickeyserver=parsedDataArr[1]
 
@@ -459,12 +464,12 @@ class Client:
                     self.publickeyserver = rsa.PublicKey.load_pkcs1(self.publickeyserver)
 
                     encmessage=rsa.encrypt(messagetoenc, self.publickeyserver)
-                    self.terminal_printer("test encryption:")
-                    self.terminal_printer(encmessage)
+                    #self.terminal_printer("test encryption:")
+                    #self.terminal_printer(encmessage)
                     self.flagForackcon=True
 
                 elif(b"ackquestion" in localCentralData):
-                    print("your question has been accepted")
+                    self.terminal_printer("your question has been accepted")
                     self.flagforServerConnection=True
 
                 if(b"unameCS" in localCentralData):
@@ -482,15 +487,19 @@ class Client:
                         name=name.strip()
 
                         if(len(name)!=4):
-                            print("incorrect format")
+                            self.terminal_printer("incorrect format")
                         else:
                             nameFlag=True
 
                     name=name[0:3] + "##" + name[3:]
+                    
+                   
                     message= "sendnameserver " + "<" + name +">" + " <" + (str(self.client_ip_address)) + ">"
                     enc=self.encrypt_data_central_server(message.encode())
 
                     self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
+                    self.terminal_printer("your name has been accepted, and sent to the server")
+                    self.terminal_printer("Please press the sendquestion button when you are ready")
 
                 if(b"comrequest" in localCentralData):
                     self.terminal_printer("please choose the partner to communicate with (note please put name exactly as you see it)")
@@ -501,7 +510,7 @@ class Client:
                         nameArray=parsedMessage[1]
 
                         for i in nameArray:
-                            print(i)
+                            self.terminal_printer(i)
 
                         while(self.inputData==""):
                             time.sleep(0.0001)
@@ -528,7 +537,7 @@ class Client:
 
                         self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))
                     else:
-                        print("no other client right now please try in some time")
+                        self.terminal_printer("no other client right now please try in some time")
 
 
                 if(b"sendquestion" in localCentralData):
@@ -584,8 +593,8 @@ class Client:
                     #self.UDPClientCentralSocket.sendto(encmessage, (self.centralServerIp, self.centralServerPort))
                     
                     #may be moved
-                    self.communicationFlag=True
-                    print("congrats we are just doing final configs")
+                    
+                    self.terminal_printer("congrats we are just doing final configs")
                     #print("now please use your textbox to send messages to your partner")
                     
                 
@@ -618,12 +627,14 @@ class Client:
                         #tempVar=ipportListstringsplit.at(i)
                     tempVar=ipportListstringsplit
                     tempVar=tempVar.split(",")
-                    tempVar[0]=tempVar.strip()
+                    tempVar[0]=tempVar[0].strip()
                     tempVar[1]=int(tempVar[1])
                     tempVarArr.append(tempVar)
                     
+                    print("ip port array:", tempVarArr)
                     self.forwarderServerIp=tempVar[0]
                     self.forwarderServerPort=tempVar[1]
+                    
                     
                     self.relayServerIpporttupleList=tempVarArr
                     
@@ -631,7 +642,9 @@ class Client:
                         self.relayServerIpList.append(j[0])
                         self.relayServerPortList.append(j[1])
                     
+                    self.communicationFlag=True
                     print("stored ip-port")
+                    self.terminal_printer("you can use your text box to communicate with your peer now!")
                         
                     
                 localCentralData=""
