@@ -14,9 +14,9 @@ import json
 
 
 class Forwarder:
-    centralServerIp = "192.168.191.140"
+    centralServerIp = "192.168.0.2"
     centralPort = 20001
-    ip = '192.168.191.165'
+    ip = "192.168.0.128"
     noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
     noise = None
 
@@ -25,7 +25,6 @@ class Forwarder:
     bufferSize = 4096
     mainMsg = ""
     ipList = []
-    ranFlag = ["False", "False", "False"]
 
     centralKey = None
     clusterKeyList = []
@@ -109,9 +108,8 @@ class Forwarder:
             if addr[1] == 8473:
                 self.clusterkey3 = self.clusterkey
                 print(3)
-            self.clusterSend(self.clusterkey, addr)
-            #self.forward_message(b"hi", (self.ip, 3930)) #temporary spot for function call.
 
+            
         elif identifier_flag == b"sendmessage":
             print("forwarding")
             self.forward_message(message_content, message_sender)
@@ -132,8 +130,7 @@ class Forwarder:
 
                 temp = json.loads(message_content.decode())
                 self.ipMap(temp)
-                #self.sendM()
-                print(temp)
+            
             elif identifier_flag == b"cluster":
                 print("This is the message content: {}".format(message_content))
                 print("This is the message sender: {}".format(message_sender))
@@ -172,7 +169,18 @@ class Forwarder:
             self.ipList = self.ipList +  ips
         else:
             self.ipList = ips
-        print(ipList[0])
+        print("this")
+        print(self.ipList[0])
+        for i in range(len(self.noiseList)):
+            if self.noiseList[i][1] == 1410:
+                newaddr = self.noiseList[i]
+                self.clusterSend(self.clusterkey1, newaddr)
+            elif self.noiseList[i][1] == 3784:
+                newaddr = self.noiseList[i]
+                self.clusterSend(self.clusterkey2, newaddr)
+            elif self.noiseList[i][1] == 8473:
+                newaddr = self.noiseList[i]
+                self.clusterSend(self.clusterkey3, newaddr)
 
     def clusterInit(self):
         serverIP = self.get_local_ip().encode()
@@ -185,14 +193,13 @@ class Forwarder:
            print("centralserver is offline") 
 
     def clusterSend(self, key, addr):
+
         serverIP = self.get_local_ip().encode()
         #until i recieve clients ip and port
-        temp = json.dumps(("111.111.111.111", 9999)).encode('utf-8')
+        #temp = json.dumps(self.ipList).encode('utf-8')
+        temp = json.dumps(self.noiseList).encode('utf-8')
         ###################
         print(temp)
-        trueflag = random.randrange(len(self.ranFlag))
-        self.ranFlag[trueflag] = "True"
-        print(self.ranFlag)
         message = b"destination <" + temp + b">" + b" <" + serverIP + b">"
         encryptMsg = rsa.encrypt(message, key)
         print(encryptMsg)
@@ -207,9 +214,16 @@ class Forwarder:
 
 
     def forward_message(self, message, addr):
+        #temp = json.dumps(addr).encode('utf-8')
+        ranFlag = ["False", "False", "False"]
+        trueflag = random.randrange(len(ranFlag))
+        ranFlag[trueflag] = "True"
+        print(ranFlag)
         ip = self.get_local_ip().encode()
-        fmessage = b"forwardedMessage" + b" <" + message + b">" + b" <" + ip + b">" + b" <" + self.ranFlag[0].encode() + b">" 
-        self.client.sendto(fmessage,(self.ip, 1410))
+
+        for i in range(len(self.noiseList)):
+            fmessage = b"forwardedMessage" + b" <" + message + b">" + b" <" + addr + b">" + b" <" + ranFlag[i].encode() + b">" 
+            self.client.sendto(fmessage,(self.noiseList[i]))
 
 
     def get_local_ip(self): # this method is used to resolve your own ip address
@@ -230,6 +244,7 @@ class Forwarder:
         self.centralStartup()
         time.sleep(3)
         self.clusterInit()
+
         while True:
             try:
                 data, address = self.client.recvfrom(self.bufferSize)
