@@ -197,7 +197,7 @@ class Forwarder:
         serverIP = self.get_local_ip().encode()
         #until i recieve clients ip and port
         #temp = json.dumps(self.ipList).encode('utf-8')
-        temp = json.dumps(self.noiseList).encode('utf-8')
+        temp = json.dumps(self.ipList).encode('utf-8')
         ###################
         print(temp)
         message = b"destination <" + temp + b">" + b" <" + serverIP + b">"
