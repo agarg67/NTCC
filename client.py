@@ -346,7 +346,7 @@ class Client:
 
             if(self.inputData!=""):
                 
-                self.terminal_printer(self.inputData)
+                print(self.inputData)
                 localInputData=self.inputData
                 self.gui.currentCommand=""
                 self.clear_input_data()
@@ -449,8 +449,8 @@ class Client:
                 self.centralData=""
 
                 localCentralData=self.decrypt_data(localCentralData)
-                self.terminal_printer("decryptedData")
-                self.terminal_printer(localCentralData)
+                print("decryptedData")
+                print(localCentralData)
 
                 if(b"ackcon" in localCentralData):
                     self.terminal_printer("public key sent to server")
