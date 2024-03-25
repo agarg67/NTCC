@@ -85,11 +85,11 @@ class Noise:
         elif identifier_flag == b"forwardedMessage":
             print("it works")
             print(message_content)
+            print(flag)
             if flag == "True":
-                self.sendMessage(message_content, addr)
+                self.sendMessage(message_content, message_sender)
             else:
                 print("not the one")
-            #self.UDPserver.sendto(message_content, ("192.168.191.37", 48000))
 
         else:
             # possibly encrypted message which needs to be decrypted
@@ -103,13 +103,18 @@ class Noise:
             if identifier_flag == b"destination":
                 temp = json.loads(message_content.decode())
                 print(temp)
-                ipList = temp
+                self.ipList = temp
 
     def sendMessage(self, data, sender):
-        if sender == ipList[0]:
-            self.UDPserver.sendto(data, ipList[1])
-        elif sender == ipList[1]:
-            self.UDPserver.sendto(data, ipList[0])
+        print("i am here")
+        if sender == self.ipList[0]:
+            print("here")
+            self.UDPserver.sendto(data, self.ipList[1])
+        elif sender == self.ipList[1]:
+            print("here too")
+            self.UDPserver.sendto(data, self.ipList[0])
+        else:
+            print("not working")
 
 
     def run_program(self):
