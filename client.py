@@ -346,7 +346,7 @@ class Client:
 
             if(self.inputData!=""):
                 
-                print(self.inputData)
+                self.terminal_printer(self.inputData)
                 localInputData=self.inputData
                 self.gui.currentCommand=""
                 self.clear_input_data()
