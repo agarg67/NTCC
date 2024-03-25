@@ -7,6 +7,7 @@ import random
 import threading
 import time
 import rsa
+import json
 
 class Noise:
     forwarderIP = "192.168.0.128"
@@ -84,7 +85,11 @@ class Noise:
         elif identifier_flag == b"forwardedMessage":
             print("it works")
             print(message_content)
-            self.UDPserver.sendto(message_content, ("192.168.191.37", 48000))
+            if flag == "True":
+                self.sendMessage(message_content, addr)
+            else:
+                print("not the one")
+            #self.UDPserver.sendto(message_content, ("192.168.191.37", 48000))
 
         else:
             # possibly encrypted message which needs to be decrypted
@@ -95,8 +100,16 @@ class Noise:
             message_content = self.main_message(decrypted_messsage)
             message_sender = self.message_sender(decrypted_messsage)
 
-            print(message_content)
+            if identifier_flag == b"destination":
+                temp = json.loads(message_content.decode())
+                print(temp)
+                ipList = temp
 
+    def sendMessage(self, data, sender):
+        if sender == ipList[0]:
+            self.UDPserver.sendto(data, ipList[1])
+        elif sender == ipList[1]:
+            self.UDPserver.sendto(data, ipList[0])
 
 
     def run_program(self):
