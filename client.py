@@ -10,7 +10,6 @@ import rsa
 import json
 from mainGUI import ClientGUI
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLineEdit, QPushButton, QVBoxLayout, QWidget
-from PyQt5.QtGui import QTextCursor
 from PyQt5.QtCore import QThread, pyqtSignal
 
 # client class
@@ -140,8 +139,6 @@ class Client:
         for i in dataToPrint:
             self.gui.messageLog.append(str(i))
         
-        self.gui.messageLog.moveCursor(QTextCursor.End)
-        
     def asynchrounous_input(self):
         self.gui.currentCommand=""
         while(True):
@@ -167,7 +164,7 @@ class Client:
             return finalArr
         
         tempArr=messageToParse.split(b" <")
-        print(tempArr)
+        self.terminal_printer(tempArr)
         
         if(b"ackcon" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
@@ -240,7 +237,7 @@ class Client:
         pem = self.publicKeySelf.save_pkcs1()
         message=b"sendpubip" + b" <" + pem + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
-        print(message)
+        self.terminal_printer(message)
         self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
         #for testing
         #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
@@ -249,7 +246,7 @@ class Client:
     def sendQuestionToServer(self, question, answer):
         message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + (str(self.client_ip_address)) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">" + " <" + str(self.clientRelayPort) + ">"
         
-        print(message.encode())
+        self.terminal_printer(message.encode())
         #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
         encmessage=self.encrypt_data_central_server(message.encode())
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
@@ -349,18 +346,18 @@ class Client:
 
             if(self.inputData!=""):
                 
-                print(self.inputData)
+                self.terminal_printer(self.inputData)
                 localInputData=self.inputData
                 self.gui.currentCommand=""
                 self.clear_input_data()
 
-                if(localInputData=="CMD#?sendpubip"):
+                if(localInputData=="sendpubip" or localInputData=="CMD#?sendpubip"):
                     self.sendPublickeyIP()
                 elif(localInputData=="disconnectServer"):
                     message="receivedis"
                     self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
 
-                elif(localInputData=="CMD#?sendquestion"):
+                elif(localInputData=="sendquestion" or localInputData=="CMD#?sendquestion"):
 
                     if(self.flagForackcon==True):
                         self.terminal_printer("please enter your question:")
@@ -382,7 +379,7 @@ class Client:
                     else:
                         self.terminal_printer("ERRROR: pub key not accepted yet")
 
-                elif(localInputData=="CMD#?comrequest"):
+                elif(localInputData=="comrequest" or localInputData=="CMD#?comrequest"):
                     if(self.flagforServerConnection==True):
 
                         key_phrase="client_server"
@@ -399,8 +396,6 @@ class Client:
 
                     if(self.communicationFlag==True):
                         self.sendMessage(localInputData)
-                    else:
-                        self.terminal_printer("please finish the communication process first, before trying to talk to peer")
 
 
                 localInputData=""
@@ -441,7 +436,7 @@ class Client:
                 if(b"message" in localRelayData): # will be changed
                     parsedData=self.parseIncomingMessage(localRelayData)
                     
-                    messagetodisplay=parsedData[2][:len(messagetodisplay)-1].decode()
+                    messagetodisplay=parsedData[2][:len(parsedData[2])-1].decode()
                     self.terminal_printer(messagetodisplay)
                 
 
