@@ -14,9 +14,9 @@ import json
 
 
 class Forwarder:
-    centralServerIp = "192.168.0.2"
+    centralServerIp = "10.157.252.236"
     centralPort = 20001
-    ip = "192.168.0.128"
+    ip = "10.157.252.236"
     noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
     noise = None
 
@@ -112,7 +112,7 @@ class Forwarder:
             
         elif identifier_flag == b"sendmessage":
             print("forwarding")
-            self.forward_message(message_content, message_sender)
+            self.forward_message(message_content, addr)
             
 
         else:
@@ -214,7 +214,7 @@ class Forwarder:
 
 
     def forward_message(self, message, addr):
-        #temp = json.dumps(addr).encode('utf-8')
+        
         ranFlag = ["False", "False", "False"]
         trueflag = random.randrange(len(ranFlag))
         ranFlag[trueflag] = "True"
