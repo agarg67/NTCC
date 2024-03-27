@@ -84,7 +84,8 @@ class Noise:
         elif identifier_flag == b"forwardedMessage":
             print("it works")
             print(message_content)
-            if flag == "True":
+            print(flag)
+            if flag == b"True":
                 self.sendMessage(message_content, message_sender)
             else:
                 print("not the one")
@@ -104,10 +105,11 @@ class Noise:
                 self.ipList = temp
 
     def sendMessage(self, data, sender):
-        if sender == self.ipList[0]:
-            self.UDPserver.sendto(data, self.ipList[1])
-        elif sender == self.ipList[1]:
-            self.UDPserver.sendto(data, self.ipList[0])
+
+        if sender == str(self.ipList[0][1]).encode():
+            self.UDPserver.sendto(data, (self.ipList[1][0], self.ipList[1][1]))
+        elif sender == str(self.ipList[1][1]).encode():
+            self.UDPserver.sendto(data, (self.ipList[0][0], self.ipList[0][1]))
 
     def run_program(self):
         print(self.get_local_ip())

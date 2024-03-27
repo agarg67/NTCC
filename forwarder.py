@@ -14,9 +14,9 @@ import json
 
 
 class Forwarder:
-    centralServerIp = "10.157.252.236"
+    centralServerIp = "192.168.216.224"
     centralPort = 20001
-    ip = "10.157.252.236"
+    ip = "192.168.216.165"
     noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
     noise = None
 
@@ -222,7 +222,7 @@ class Forwarder:
         ip = self.get_local_ip().encode()
 
         for i in range(len(self.noiseList)):
-            fmessage = b"forwardedMessage" + b" <" + message + b">" + b" <" + addr + b">" + b" <" + ranFlag[i].encode() + b">" 
+            fmessage = b"forwardedMessage" + b" <" + message + b">" + b" <" + str(addr[1]).encode() + b">" + b" <" + ranFlag[i].encode() + b">" 
             self.client.sendto(fmessage,(self.noiseList[i]))
 
 
