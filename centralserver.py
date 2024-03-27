@@ -32,6 +32,9 @@ class ipMapper_manager:
     def add_client_IP(self, ip_address):
         self.server_ips.append(ip_address)
 
+    def change_relay_ports(self, ip_address, relay_ports):
+        self.server_ips.append((ip_address, relay_ports))
+
     def fetch_server_IPs(self):
         return self.server_ips
 
@@ -54,6 +57,7 @@ class CentralServer:
         self.listofclientIP = []
         self.ip_map = ipMapper_manager()
         self.threadUDPserver = None
+        self.clientRelayPorts = {}
 
         # forwarder information
         self.forwarderIP = None
@@ -132,6 +136,10 @@ class CentralServer:
         additional_message[4] = additional_message[4].replace(b">", b"")
         return additional_message[4]
 
+    def additional_relay_ports(self, data):
+        additional_message = data.split(b" <")
+        additional_message[5] = additional_message[5].replace(b">", b"")
+        return additional_message[5]
 
     # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
     def split_and_encrypt(self, message, client_public_key):
@@ -305,6 +313,7 @@ class CentralServer:
                             ack_question = False
                             question = self.addtional_question_editor(decrypted_message)
                             answer = self.addtional_answer_editor(decrypted_message)
+                            relay_port = int(self.additional_relay_ports(decrypted_message))
 
                             if not self.questions_and_answer:
                                 self.questions_and_answer.setdefault(addr, [question, answer, message_content])
@@ -326,6 +335,11 @@ class CentralServer:
 
                                 message = (b"ackquestion" + b" <" + message_content + b"> <"
                                            + str(self.fetch_ip_address()).encode() + b">")
+
+                                self.clientRelayPorts.setdefault(addr, relay_port)
+
+                                self.ip_map.change_relay_ports(addr[0], relay_port)
+                                print(self.ip_map.fetch_server_IPs())
 
                                 print(message)
                                 encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
@@ -453,7 +467,7 @@ class CentralServer:
 
                                 message = (b"ackanswer <" + b"Correct" + b"> <" + server_ip + b">")
 
-                                self.ip_map.add_client_IP(addr)
+                                #self.ip_map.add_client_IP(addr)
 
                                 encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
                                 self.UDPserver.sendto(encrypted_message, addr)
@@ -466,8 +480,8 @@ class CentralServer:
                     elif initiate_communication and (self.clients_com[addr][1] and
                                                      self.clients_com[self.clients_com[other_client][1]]):
 
-                        self.ip_map.add_IP_addr(addr)
-                        self.ip_map.add_IP_addr(other_client)
+                        #self.ip_map.add_IP_addr(addr)
+                        #self.ip_map.add_IP_addr(other_client)
 
                         print("Both clients have answered the question correctly, initiating communication")
 
