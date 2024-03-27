@@ -244,7 +244,7 @@ class Client:
         
         
     def sendQuestionToServer(self, question, answer):
-        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + (str(self.client_ip_address)) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">"
+        message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + (str(self.client_ip_address)) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">" + " <" + str(self.clientRelayPort) + ">"
         
         self.terminal_printer(message.encode())
         #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
@@ -532,7 +532,7 @@ class Client:
                             partnerName=partnerName.strip()
                             print(partnerName)
 
-                        message= "sendpartnerserver " + "<" + partnerName +">" + " <" + (str(self.client_ip_address))+">" + " <" + str(self.clientRelayPort) + ">"
+                        message= "sendpartnerserver " + "<" + partnerName +">" + " <" + (str(self.client_ip_address))+">" 
                         enc=self.encrypt_data_central_server(message.encode())
 
                         self.UDPClientCentralSocket.sendto(enc, (self.centralServerIp, self.centralServerPort))

@@ -32,6 +32,9 @@ class ipMapper_manager:
     def add_client_IP(self, ip_address):
         self.server_ips.append(ip_address)
 
+    def change_relay_ports(self, ip_address, relay_ports):
+        self.server_ips.append((ip_address, relay_ports))
+
     def fetch_server_IPs(self):
         return self.server_ips
 
@@ -54,6 +57,7 @@ class CentralServer:
         self.listofclientIP = []
         self.ip_map = ipMapper_manager()
         self.threadUDPserver = None
+        self.clientRelayPorts = {}
 
         # forwarder information
         self.forwarderIP = None
@@ -132,6 +136,10 @@ class CentralServer:
         additional_message[4] = additional_message[4].replace(b">", b"")
         return additional_message[4]
 
+    def additional_relay_ports(self, data):
+        additional_message = data.split(b" <")
+        additional_message[5] = additional_message[5].replace(b">", b"")
+        return additional_message[5]
 
     # NEED To add a function that splits the message into 245 byte chunks and encrypts them separately
     def split_and_encrypt(self, message, client_public_key):
@@ -305,6 +313,7 @@ class CentralServer:
                             ack_question = False
                             question = self.addtional_question_editor(decrypted_message)
                             answer = self.addtional_answer_editor(decrypted_message)
+                            relay_port = int(self.additional_relay_ports(decrypted_message))
 
                             if not self.questions_and_answer:
                                 self.questions_and_answer.setdefault(addr, [question, answer, message_content])
@@ -326,6 +335,11 @@ class CentralServer:
 
                                 message = (b"ackquestion" + b" <" + message_content + b"> <"
                                            + str(self.fetch_ip_address()).encode() + b">")
+
+                                self.clientRelayPorts.setdefault(addr, relay_port)
+
+                                self.ip_map.change_relay_ports(addr[0], relay_port)
+                                print(self.ip_map.fetch_server_IPs())
 
                                 print(message)
                                 encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
@@ -453,7 +467,7 @@ class CentralServer:
 
                                 message = (b"ackanswer <" + b"Correct" + b"> <" + server_ip + b">")
 
-                                self.ip_map.add_client_IP(addr)
+                                #self.ip_map.add_client_IP(addr)
 
                                 encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[addr])
                                 self.UDPserver.sendto(encrypted_message, addr)
@@ -466,8 +480,8 @@ class CentralServer:
                     elif initiate_communication and (self.clients_com[addr][1] and
                                                      self.clients_com[self.clients_com[other_client][1]]):
 
-                        self.ip_map.add_IP_addr(addr)
-                        self.ip_map.add_IP_addr(other_client)
+                        #self.ip_map.add_IP_addr(addr)
+                        #self.ip_map.add_IP_addr(other_client)
 
                         print("Both clients have answered the question correctly, initiating communication")
 
@@ -485,89 +499,13 @@ class CentralServer:
 
                         #message = (b"sendip")
 
-
-
-
-
                     else:
                         print("Message not recognized")
                         return None
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
             else:
                 print("Client {} is not in the active clients list".format(addr))
 
-        """
-        elif identifier_flag == b"sendquestion":
-
-            temp_message = []
-            temp_message = data.split(b" <")
-            temp_message[1] = temp_message[1].replace(b">", b"")
-            temp_message[2] = temp_message[2].replace(b">", b"")
-            temp_message[3] = temp_message[3].replace(b">", b"")
-
-            print(temp_message)
-
-
-            if message_sender in self.active_clients_and_keys:
-
-                if not self.active_clients_and_keys[message_sender]:
-                    print("Client {} has not sent their public key".format(message_sender))
-
-                else:
-                    ciphertext = pickle.loads(message_content)
-                    decrypted_message = rsa.decrypt(ciphertext, self.rsaPrivateKey)
-                    print("Decrypted message: {}".format(decrypted_message))
-
-
-            else:
-                print("Client {} is not in the active clients list".format(message_sender))
-
-
-
-
-            pass
-        elif identifier_flag == b"answerquestion":
-            pass
-        elif identifier_flag == b"comrequest":
-            pass
-        """
-
-        message_identifier = data.split(b" <")
-
-        if message_identifier[0] == b"sendpubip":
-            pass
-
-        elif message_identifier[0] == "sendquestion":
-            print("Question received from Client with {}".format(addr))
-            ##WOULD NEED TO KNOW THE FORMAT OF THE QUESTION MESSAGE
-            self.questions.append(message_identifier[1])
-            message = "ackquestion" + " <" + message_identifier[2] + "> "  # This will be the question ID received
-            self.UDPserver.sendto(message.encode(), addr)
-
-        elif message_identifier[0] == "answerquestion":
-            print("Answer received from User")
-            ##NEED To REPLACE WITH FORMAT
-
-        elif message_identifier[0] == "comrequest":
-            print("Client has requested to communicate with another client. Fetching active clients list:")
-            print(self.active_clients[:])
-        else:
-            # print("Message not recognized")
-            return None
 
     def initiate_communication(self, data, addr):
         ### Checks if there is two clients simultaneously requesting to communicate ###
@@ -623,6 +561,18 @@ class CentralServer:
                     data, address = self.UDPserver.recvfrom(self.bufferSize)
                     self.receive_message(data, address)
                 elif (self.clients_com[self.listofclientIP[0]][1] and self.clients_com[self.listofclientIP[1]][1]):
+
+                    temp_pem = self.active_clients_and_keys[self.listofclientIP[0]].save_pkcs1()
+                    temp_pem2 = self.active_clients_and_keys[self.listofclientIP[1]].save_pkcs1()
+
+                    message = (b"sendcomreq" + b" <" + temp_pem + b"> <ip_port " + str(self.forwarderIP[0]).encode() + b"," + str(self.forwarderIP[1]).encode() + b">")
+                    message2 = (b"sendcomreq" + b" <" + temp_pem2 + b"> <ip_port " + str(self.forwarderIP[0]).encode() + b"," + str(self.forwarderIP[1]).encode() + b">")
+
+                    encrypted_message = self.split_and_encrypt(message, self.active_clients_and_keys[self.listofclientIP[1]])
+                    encrypted_message2 = self.split_and_encrypt(message2, self.active_clients_and_keys[self.listofclientIP[0]])
+
+                    self.UDPserver.sendto(encrypted_message2, self.listofclientIP[0])
+                    self.UDPserver.sendto(encrypted_message, self.listofclientIP[1])
 
 
                     temp = json.dumps(self.ip_map.fetch_server_IPs()).encode('utf-8')
