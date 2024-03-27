@@ -31,7 +31,7 @@ class ClientGUI(QMainWindow):
         self.serverButtonLayout = QHBoxLayout()
 
         self.sendpubip_Button = QPushButton('sendpubip')
-        self.sendpubip_Button.clicked.connect(lambda: self.setCommand(input = "sendpubip"))
+        self.sendpubip_Button.clicked.connect(lambda: self.setCommand(input = "CMD#?sendpubip"))
         self.disconnectServer_Button = QPushButton('disconnectServer')
         self.disconnectServer_Button.clicked.connect(lambda: self.setCommand(input = "disconnectServer"))
         
@@ -47,13 +47,13 @@ class ClientGUI(QMainWindow):
         self.sendcomreq_Button = QPushButton('sendcomreq')
         self.sendcomreq_Button.clicked.connect(lambda: self.setCommand(input = "sendcomreq"))
         self.comrequest_Button = QPushButton('comrequest')
-        self.comrequest_Button.clicked.connect(lambda: self.setCommand(input = "comrequest"))
+        self.comrequest_Button.clicked.connect(lambda: self.setCommand(input = "CMD#?comrequest"))
         self.refreshcom_Button = QPushButton('refreshcom')
         self.refreshcom_Button.clicked.connect(lambda: self.setCommand(input = "refreshcom"))
 
-        self.comButtonLayout.addWidget(self.sendcomreq_Button)
+        #self.comButtonLayout.addWidget(self.sendcomreq_Button)
         self.comButtonLayout.addWidget(self.comrequest_Button)
-        self.comButtonLayout.addWidget(self.refreshcom_Button)
+        #self.comButtonLayout.addWidget(self.refreshcom_Button)
 
         self.layout.addLayout(self.comButtonLayout)
 
@@ -72,19 +72,19 @@ class ClientGUI(QMainWindow):
         self.ackButtonLayout.addWidget(self.ackquestion_Button)
         self.ackButtonLayout.addWidget(self.ackanswer_Button)
 
-        self.layout.addLayout(self.ackButtonLayout)
+        #self.layout.addLayout(self.ackButtonLayout)
 
 
         #Question Buttons
         self.questionButtonLayout = QHBoxLayout()
         
         self.sendquestion_Button = QPushButton('sendquestion')
-        self.sendquestion_Button.clicked.connect(lambda: self.setCommand(input = "sendquestion"))
+        self.sendquestion_Button.clicked.connect(lambda: self.setCommand(input = "CMD#?sendquestion"))
         self.answerquestion_Button = QPushButton('answerquestion')
         self.answerquestion_Button.clicked.connect(lambda: self.setCommand(input = "answerquestion"))
         
         self.questionButtonLayout.addWidget(self.sendquestion_Button)
-        self.questionButtonLayout.addWidget(self.answerquestion_Button)
+        #self.questionButtonLayout.addWidget(self.answerquestion_Button)
         
         self.layout.addLayout(self.questionButtonLayout)
 
