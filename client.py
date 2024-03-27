@@ -82,11 +82,11 @@ class Client:
         
         self.gui.show()
         
-        self.gui.messageLog.append("central port:" + str(portPass))
-        self.gui.messageLog.append("relay port:" + str(portPass2))
-        self.gui.messageLog.append(str(ipPass))
-        self.gui.messageLog.append(str(self.publicKeySelf))
-        self.gui.messageLog.append(str(self.privatekeySelf))
+        #self.gui.messageLog.append("central port:" + str(portPass))
+        #self.gui.messageLog.append("relay port:" + str(portPass2))
+        #self.gui.messageLog.append(str(ipPass))
+        #self.gui.messageLog.append(str(self.publicKeySelf))
+        #self.gui.messageLog.append(str(self.privatekeySelf))
 
 
         #print(self.publicKeySelf)
@@ -354,13 +354,13 @@ class Client:
                 self.gui.currentCommand=""
                 self.clear_input_data()
 
-                if(localInputData=="sendpubip" or localInputData=="CMD#?sendpubip"):
+                if(localInputData=="CMD#?sendpubip"):
                     self.sendPublickeyIP()
                 elif(localInputData=="disconnectServer"):
                     message="receivedis"
                     self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
 
-                elif(localInputData=="sendquestion" or localInputData=="CMD#?sendquestion"):
+                elif(localInputData=="CMD#?sendquestion"):
 
                     if(self.flagForackcon==True):
                         self.terminal_printer("please enter your question:")
@@ -382,7 +382,7 @@ class Client:
                     else:
                         self.terminal_printer("ERRROR: pub key not accepted yet")
 
-                elif(localInputData=="comrequest" or localInputData=="CMD#?comrequest"):
+                elif(localInputData=="CMD#?comrequest"):
                     if(self.flagforServerConnection==True):
 
                         key_phrase="client_server"
