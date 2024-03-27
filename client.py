@@ -10,6 +10,7 @@ import rsa
 import json
 from mainGUI import ClientGUI
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTextEdit, QLineEdit, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtGui import QTextCursor
 from PyQt5.QtCore import QThread, pyqtSignal
 
 # client class
@@ -81,11 +82,11 @@ class Client:
         
         self.gui.show()
         
-        #self.gui.messageLog.append("central port:" + str(portPass))
-        #self.gui.messageLog.append("relay port:" + str(portPass2))
-        #self.gui.messageLog.append(str(ipPass))
-        #self.gui.messageLog.append(str(self.publicKeySelf))
-        #self.gui.messageLog.append(str(self.privatekeySelf))
+        self.gui.messageLog.append("central port:" + str(portPass))
+        self.gui.messageLog.append("relay port:" + str(portPass2))
+        self.gui.messageLog.append(str(ipPass))
+        self.gui.messageLog.append(str(self.publicKeySelf))
+        self.gui.messageLog.append(str(self.privatekeySelf))
 
 
         #print(self.publicKeySelf)
@@ -138,6 +139,8 @@ class Client:
         
         for i in dataToPrint:
             self.gui.messageLog.append(str(i))
+        
+        self.gui.messageLog.moveCursor(QTextCursor.End)
         
     def asynchrounous_input(self):
         self.gui.currentCommand=""
