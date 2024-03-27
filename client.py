@@ -240,7 +240,7 @@ class Client:
         pem = self.publicKeySelf.save_pkcs1()
         message=b"sendpubip" + b" <" + pem + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
-        self.terminal_printer(message)
+        print(message)
         self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
         #for testing
         #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
@@ -249,7 +249,7 @@ class Client:
     def sendQuestionToServer(self, question, answer):
         message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + (str(self.client_ip_address)) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">" + " <" + str(self.clientRelayPort) + ">"
         
-        self.terminal_printer(message.encode())
+        print(message.encode())
         #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
         encmessage=self.encrypt_data_central_server(message.encode())
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
@@ -399,6 +399,8 @@ class Client:
 
                     if(self.communicationFlag==True):
                         self.sendMessage(localInputData)
+                    else:
+                        self.terminal_printer("please finish the communication process first, before trying to talk to peer")
 
 
                 localInputData=""
