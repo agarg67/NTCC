@@ -328,7 +328,8 @@ class Client:
         self.flagforServerConnection=False
         self.flagForackcon=False
         self.communicationFlag=False
-
+        
+        self.terminal_printer("Please press sendpubip button to start the process")
         while(True):
             
             # if(self.inputData!="" and "CMD#?" in self.inputData):
@@ -353,9 +354,17 @@ class Client:
 
                 if(localInputData=="sendpubip" or localInputData=="CMD#?sendpubip"):
                     self.sendPublickeyIP()
-                elif(localInputData=="disconnectServer"):
+                elif(localInputData=="CMD#?disconnectServer"):
+                    
                     message="receivedis"
-                    self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
+                    # encmessage=self.encrypt_data_forwarder(message.encode())
+                    # self.UDPClientCentralSocket.sendto(message.encode(), (self.centralServerIp, self.centralServerPort))
+                    self.sendMessage(message)
+                    self.terminal_printer("Thanks a lot, we are disconnecting you.\n Please restart the process to initate communication with another user.")
+                    self.communicationFlag=False
+                    self.flagforServerConnection=False
+                    self.flagForackcon=False
+                    
 
                 elif(localInputData=="sendquestion" or localInputData=="CMD#?sendquestion"):
 
@@ -365,6 +374,7 @@ class Client:
                             time.sleep(0.0001)
 
                         question=self.inputData
+                        self.terminal_printer(question)
                         self.clear_input_data()
 
                         self.terminal_printer("Please enter your answer:")
@@ -373,6 +383,7 @@ class Client:
                             time.sleep(0.0001)
 
                         answer=self.inputData
+                        self.terminal_printer(answer)
                         self.clear_input_data()
 
                         self.sendQuestionToServer(question, answer)
@@ -432,8 +443,15 @@ class Client:
                 #self.terminal_printer(localRelayData)
                 localRelayData=self.decrypt_data(localRelayData)
                 print(localRelayData)
+                
+                if(b"recivedis" in localRelayData):
+                    self.terminal_printer("The peer has disconnected please start the process again to connect to a diffrent peer.")
+                    self.communicationFlag=False
+                    self.flagforServerConnection=False
+                    self.flagForackcon=False
+                    
 
-                if(b"message" in localRelayData): # will be changed
+                elif(b"message" in localRelayData): # will be changed
                     parsedData=self.parseIncomingMessage(localRelayData)
                     
                     messagetodisplay=parsedData[2][:len(parsedData[2])-1].decode()
@@ -470,30 +488,37 @@ class Client:
 
                 elif(b"ackquestion" in localCentralData):
                     self.terminal_printer("your question has been accepted")
+                    self.terminal_printer("Please press comrequest button when ready")
                     self.flagforServerConnection=True
 
                 if(b"unameCS" in localCentralData):
                     self.terminal_printer("What's your name?")
-                    self.terminal_printer("Enter first 3 letters of your last name and first 1 letters of your last name")
+                    self.terminal_printer("Enter first 2 letters of your first name and first 2 letters of your last name")
                     name=""
                     nameFlag=False
                     while(nameFlag==False):
                         while(self.inputData==""):
                             time.sleep(0.0001)
                         name=self.inputData
+                        self.terminal_printer(name)
                         #self.inputData=""
                         self.clear_input_data()
 
                         name=name.strip()
 
                         if(len(name)!=4):
-                            self.terminal_printer("incorrect format")
+                            self.terminal_printer("Incorrect format, please try again")
                         else:
                             nameFlag=True
-
-                    name=name[0:3] + "##" + name[3:]
+                            
+                    strTochooseFrom="!@#$*"
                     
-                   
+                    randChar1=random.choice(strTochooseFrom)
+                    randChar2=random.choice(strTochooseFrom)
+                    randStr=randChar2+randChar1
+                    
+                    name=name[0:3] + randStr + name[3:]
+                    
                     message= "sendnameserver " + "<" + name +">" + " <" + (str(self.client_ip_address)) + ">"
                     enc=self.encrypt_data_central_server(message.encode())
 

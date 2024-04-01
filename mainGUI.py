@@ -32,8 +32,8 @@ class ClientGUI(QMainWindow):
 
         self.sendpubip_Button = QPushButton('sendpubip')
         self.sendpubip_Button.clicked.connect(lambda: self.setCommand(input = "CMD#?sendpubip"))
-        self.disconnectServer_Button = QPushButton('disconnectServer')
-        self.disconnectServer_Button.clicked.connect(lambda: self.setCommand(input = "disconnectServer"))
+        self.disconnectServer_Button = QPushButton('disconnectPeer')
+        self.disconnectServer_Button.clicked.connect(lambda: self.setCommand(input = "CMD#?disconnectServer"))
         
         self.serverButtonLayout.addWidget(self.sendpubip_Button)
         self.serverButtonLayout.addWidget(self.disconnectServer_Button)
