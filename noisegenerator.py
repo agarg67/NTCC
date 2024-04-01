@@ -17,6 +17,7 @@ class Noise:
     ipList = []
     portList = []
     forwarderPublicKey = None
+    dummyIp = [("192.168.216.224", 6666), ("192.168.216.37", 5555)]
     
 
     def __init__(self):
@@ -86,7 +87,7 @@ class Noise:
             print("it works")
             print(message_content)
             print(flag)
-            if flag == "True":
+            if flag == b"True":
                 self.sendMessage(message_content, message_sender)
             else:
                 print("not the one")
@@ -107,12 +108,16 @@ class Noise:
 
     def sendMessage(self, data, sender):
         print("i am here")
-        if sender == self.ipList[0]:
+        print(sender)
+        print((self.ipList[0][1]))
+        print(str(self.ipList[0][1]).encode())
+        print(str(self.ipList[1][1]).encode())
+        if sender == str(self.ipList[0][1]).encode():
             print("here")
-            self.UDPserver.sendto(data, self.ipList[1])
-        elif sender == self.ipList[1]:
+            self.UDPserver.sendto(data, (self.ipList[1][0], self.ipList[1][1]))
+        elif sender == str(self.ipList[1][1]).encode():
             print("here too")
-            self.UDPserver.sendto(data, self.ipList[0])
+            self.UDPserver.sendto(data, (self.ipList[0][0], self.ipList[0][1]))
         else:
             print("not working")
 

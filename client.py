@@ -164,7 +164,7 @@ class Client:
             return finalArr
         
         tempArr=messageToParse.split(b" <")
-        self.terminal_printer(tempArr)
+        print(tempArr)
         
         if(b"ackcon" in tempArr[0]):
             tempArr[0]=tempArr[0].decode().strip()
@@ -237,7 +237,7 @@ class Client:
         pem = self.publicKeySelf.save_pkcs1()
         message=b"sendpubip" + b" <" + pem + b">" + b" <" + (str(self.client_ip_address)).encode() + b">"
         
-        self.terminal_printer(message)
+        print(message)
         self.UDPClientCentralSocket.sendto(message,(self.centralServerIp, self.centralServerPort))
         #for testing
         #self.UDPClientCentralSocket.sendto(message.encode(),(self.forwarderServerIp, self.forwarderServerPort))
@@ -246,7 +246,7 @@ class Client:
     def sendQuestionToServer(self, question, answer):
         message="sendquestion" + " <" + str(self.questionId) + ">" + " <" + (str(self.client_ip_address)) + ">" + " <" + str(question) + ">" + " <" + str(answer) + ">" + " <" + str(self.clientRelayPort) + ">"
         
-        self.terminal_printer(message.encode())
+        print(message.encode())
         #encmessage=rsa.encrypt(message.encode(), self.publickeyserver)
         encmessage=self.encrypt_data_central_server(message.encode())
         self.UDPClientCentralSocket.sendto(encmessage,(self.centralServerIp, self.centralServerPort))
@@ -431,12 +431,12 @@ class Client:
                 
                 #self.terminal_printer(localRelayData)
                 localRelayData=self.decrypt_data(localRelayData)
-                self.terminal_printer(localRelayData)
+                print(localRelayData)
 
                 if(b"message" in localRelayData): # will be changed
                     parsedData=self.parseIncomingMessage(localRelayData)
                     
-                    messagetodisplay=parsedData[2]
+                    messagetodisplay=parsedData[2][:len(parsedData[2])-1].decode()
                     self.terminal_printer(messagetodisplay)
                 
 
