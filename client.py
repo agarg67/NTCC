@@ -33,7 +33,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.216.224"
+    centralServerIp="192.168.212.140"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="192.168.191.165"
@@ -444,7 +444,7 @@ class Client:
                 localRelayData=self.decrypt_data(localRelayData)
                 print(localRelayData)
                 
-                if(b"recivedis" in localRelayData):
+                if(b"receivedis" in localRelayData):
                     self.terminal_printer("The peer has disconnected please start the process again to connect to a diffrent peer.")
                     self.communicationFlag=False
                     self.flagforServerConnection=False
@@ -572,6 +572,7 @@ class Client:
                     questionToAnswer=parsedMessage[2]
                     questionToAnswer=questionToAnswer[:len(questionToAnswer)-1].decode()
                     #print("hi")
+                    self.terminal_printer("Here is the question for you")
                     self.terminal_printer(questionToAnswer)
                     #self.terminal_printer(parsedMessage[2])
 
