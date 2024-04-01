@@ -407,6 +407,8 @@ class Client:
 
                     if(self.communicationFlag==True):
                         self.sendMessage(localInputData)
+                    else:
+                        self.terminal_printer("The peer has not connected yet, please first finish the process")
 
 
                 localInputData=""
