@@ -95,6 +95,7 @@ class ClientGUI(QMainWindow):
 
         # Example for a "Send Command" button
         self.sendButton = QPushButton('Send')
+        self.inputBox.returnPressed.connect(self.on_returnPressed)
         self.sendButton.clicked.connect(self.updateCommand)
         self.layout.addWidget(self.sendButton)
 
@@ -111,5 +112,10 @@ class ClientGUI(QMainWindow):
         #self.currentCommand=""
         return temp
     
+    def on_returnPressed(self):
+        temp = str(self.inputBox.text())
+        self.inputBox.clear()
+        self.currentCommand = temp
+
     def setCommand(self, input):
         self.currentCommand = input
