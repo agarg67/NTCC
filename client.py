@@ -33,7 +33,7 @@ class Client:
     clientRelayPort=0
 
 
-    centralServerIp="192.168.93.224"
+    centralServerIp="192.168.97.224"
     centralServerPort=20001 # port is fixed up
 
     forwarderServerIp="192.168.191.165"
@@ -354,7 +354,7 @@ class Client:
 
                 if(localInputData=="sendpubip" or localInputData=="CMD#?sendpubip"):
                     self.sendPublickeyIP()
-                elif(localInputData=="CMD#?disconnectServer"):
+                elif(localInputData=="CMD#?disconnectServer" and self.communicationFlag==True):
                     
                     message="receivedis"
                     # encmessage=self.encrypt_data_forwarder(message.encode())
