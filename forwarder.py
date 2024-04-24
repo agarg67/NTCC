@@ -14,10 +14,10 @@ import json
 
 
 class Forwarder:
-    centralServerIp = "192.168.216.224"
+    centralServerIp = "192.168.97.224"
     centralPort = 20001
     ip = "192.168.216.165"
-    noiseList = [(ip, 1410), (ip, 3784), (ip, 8473)]
+    noiseList = [("192.168.97.36", 1410), ("192.168.97.36", 3784), ("192.168.97.36", 8473)]
     noise = None
 
     server=""
@@ -69,9 +69,6 @@ class Forwarder:
         pubkey = self.publicKey.save_pkcs1()
         source = addr[0].encode()
 
-        print("This is the data received: {}\n".format(data))
-        print("\nThis is the data received from: {}\n".format(addr))
-
         identifier_flag = None
 
         if (b"ackforwarder" in data) or (b"ackcluster" in data):
@@ -82,36 +79,31 @@ class Forwarder:
         if b"sendmessage" in data:
             identifier_flag = self.message_identifier(data)
             message_content = self.client_message(data)
-            print("client content")
-            print(message_content)
+            print("Client message recieved")
             message_sender = self.message_sender(data)
 
         if identifier_flag == b"ackforwarder":
             self.centralKey = rsa.PublicKey.load_pkcs1(message_content.decode())
-
+            print("Central Server connected")
             message = b"sendipmapper <Central_Server598135_4123.512356> <" + serverIP + b">"
-
-            print(message)
-
             encrypted_message = rsa.encrypt(message, self.centralKey)
-            print(encrypted_message)
 
         elif identifier_flag == b"ackcluster":    
             
             self.clusterkey = rsa.PublicKey.load_pkcs1(message_content.decode())
             if addr[1] == 1410:
                 self.clusterkey1 = self.clusterkey
-                print(1)
+                print("Noise 1 connected")
             if addr[1] == 3784:
                 self.clusterkey2 = self.clusterkey
-                print(2)
+                print("Noise 2 connected")
             if addr[1] == 8473:
                 self.clusterkey3 = self.clusterkey
-                print(3)
+                print("Noise 3 connected")
 
             
         elif identifier_flag == b"sendmessage":
-            print("forwarding")
+            print("Forwarding message")
             self.forward_message(message_content, addr)
             
 
@@ -125,33 +117,11 @@ class Forwarder:
             message_sender = self.message_sender(decrypted_messsage)
 
             if identifier_flag == b"ackipmapper":
-                print("This is the message content: {}".format(message_content))
-                print("This is the message sender: {}".format(message_sender))
 
                 temp = json.loads(message_content.decode())
                 self.ipMap(temp)
-            
-            elif identifier_flag == b"cluster":
-                print("This is the message content: {}".format(message_content))
-                print("This is the message sender: {}".format(message_sender))
             else:
                 print("nothing yet")
-
-
-
-            
-
-
-
-
-
-
-            #message = b"hey" + b" <" + rsa.encrypt(b"hey", self.centralKey) + b">"+ b" <" + serverIP + b">"
-            #self.client.sendto(message, ("192.168.0.128", 20001))
-            #print(message)
-        #else:
-        #    print("Message not recognized")
-        #    return None
 
     def centralStartup(self):
         serverIP = self.get_local_ip().encode()
@@ -165,12 +135,8 @@ class Forwarder:
     #Ip Map
     ################################################################################################################################
     def ipMap(self, ips):
-        if self.ipList is not None:
-            self.ipList = self.ipList +  ips
-        else:
-            self.ipList = ips
-        print("this")
-        print(self.ipList[0])
+
+        self.ipList = ips
         for i in range(len(self.noiseList)):
             if self.noiseList[i][1] == 1410:
                 newaddr = self.noiseList[i]
@@ -199,10 +165,8 @@ class Forwarder:
         #temp = json.dumps(self.ipList).encode('utf-8')
         temp = json.dumps(self.ipList).encode('utf-8')
         ###################
-        print(temp)
         message = b"destination <" + temp + b">" + b" <" + serverIP + b">"
         encryptMsg = rsa.encrypt(message, key)
-        print(encryptMsg)
         self.client.sendto(encryptMsg, addr)
 
 
@@ -218,7 +182,6 @@ class Forwarder:
         ranFlag = ["False", "False", "False"]
         trueflag = random.randrange(len(ranFlag))
         ranFlag[trueflag] = "True"
-        print(ranFlag)
         ip = self.get_local_ip().encode()
 
         for i in range(len(self.noiseList)):
